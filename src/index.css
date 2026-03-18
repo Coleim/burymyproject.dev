@@ -1,0 +1,58 @@
+:root {
+  /* === Backgrounds === */
+  --color-bg-primary: #0c0f14;
+  --color-bg-secondary: #121826;
+  --color-bg-card: #1a2233;
+
+  /* === Gradients / overlays === */
+  --color-overlay-dark: rgba(5, 8, 15, 0.45);
+  --color-overlay-light: rgba(255, 255, 255, 0.05);
+
+  /* === Primary accents === */
+  --color-accent-purple: #6e5cff;
+  --color-accent-green: #4fa38a;
+  --color-accent-blue: #3a6ea5;
+
+  /* === Candle / highlight === */
+  --color-accent: #c7a86c;
+  --color-accent-warm: #f5c27a;
+
+  --color-accent-glow: #ffdf9a;
+
+  /* === Text === */
+  --color-text-primary: #eaeaf0;
+  --color-text-secondary: #a8a8b3;
+  --color-text-muted: #6b7280;
+
+  /* === Borders / subtle UI === */
+  --color-border: rgba(255, 255, 255, 0.08);
+
+  /* === Cards (grave cards gradient ideas) === */
+  --gradient-card-1: linear-gradient(135deg, #2c2f5a, #1a2233);
+  --gradient-card-2: linear-gradient(135deg, #3a2f4f, #1f2a3a);
+  --gradient-card-3: linear-gradient(135deg, #2f4a4f, #1a2a2a);
+
+  /* === Button === */
+  --color-btn-bg: #e6e9f2;
+  --color-btn-text: #0b0f1a;
+  --color-btn-hover: #ffffff;
+
+  --font-heading: "Cinzel", serif;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
+  background-color: var(--color-bg-primary);
+}
+
+/**/
+/* h1, h2, .tombstone-name, .epitaph{ */
+/* var(--font-display) */
+/* p, nav links, buttons, body text   → var(--font-body) */
+/* dates, tags, stats, labels         → var(--font-mono) */
