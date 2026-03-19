@@ -1,27 +1,25 @@
 import logo from "@/assets/grave-logo.png";
-import styles from "./Navbar.module.css";
 import { Link } from "react-router-dom";
+import { LinkButton } from "./LinkButton";
+import styles from "./Navbar.module.css";
 
-export function Navbar() {
+type NavbarProps = {};
+
+export function Navbar({}: NavbarProps) {
   return (
-    // <div className={styles.navbar}>
-    //   <img src={logo} alt="burymyproject logo" style={{ height: "30px" }} />
-    //   <span style={{ color: "white" }}>burymyproject.dev</span>
-    //   <button>login/signup</button>
-    // </div>
-
     <nav className={styles.navbar}>
       <Link to="/" className={styles["navbar-brand"]}>
         <img src={logo} alt="Sideplot logo" className={styles["navbar-logo"]} />
         <span className={styles["navbar-name"]}>burymyproject.dev</span>
       </Link>
+
       <div className={styles["navbar-actions"]}>
-        <Link to="/login" className={styles["button-ghost"]}>
+        <LinkButton to="/login" variant="secondary">
           Log In
-        </Link>
-        <Link to="/signup" className={styles["button-primary"]}>
+        </LinkButton>
+        <LinkButton to="/signup" variant="accent">
           Sign Up
-        </Link>
+        </LinkButton>
       </div>
     </nav>
 

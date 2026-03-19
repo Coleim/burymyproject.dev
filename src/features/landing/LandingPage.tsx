@@ -1,4 +1,5 @@
 import { Navbar } from "@/shared/components/Navbar";
+import { Hero } from "./Hero";
 import styles from "./LandingPage.module.css";
 
 export function LandingPage() {
@@ -6,28 +7,7 @@ export function LandingPage() {
     <div className={styles.content}>
       <div className={styles.inner}>
         <Navbar />
-        {/* HERO */}
-        <div className={styles.hero}>
-          <h2 className={styles["hero-subtitle"]}>
-            The final resting place for your abandoned ideas
-          </h2>
-          <h1 className={styles["hero-title"]}>Bury Your Dead Projects</h1>
-          <p className={styles["hero-description"]}>
-            Every developer has abandoned a project. <br />
-            Bury it. Turn the page.
-          </p>
-          <button
-            className={styles["button-primary"]}
-            aria-label="Dig a grave for your abandoned projects"
-          >
-            🪦 Dig a grave - It's Free
-          </button>
-
-          <span className={styles["text-small"]}>
-            No credit card required. Just bring your corpses.
-          </span>
-        </div>
-
+        <Hero />
         <div className={styles["social-proof"]}>
           <div className={styles["proof-item"]}>
             <span className={styles["proof-icon"]}>⚰️</span>
@@ -117,7 +97,7 @@ export function LandingPage() {
 
         <section className={styles["cta-section"]}>
           <p className={styles["section-label"]}>It's time</p>
-          <h2 className={styles["cta-title"]}>Ready to let go?</h2>
+          <h2 className={styles["cta-title"]}>Ready to let it go?</h2>
           <p className={styles["cta-subtitle"]}>
             Your side projects deserve a dignified end.
           </p>
