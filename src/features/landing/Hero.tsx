@@ -12,8 +12,9 @@ export function Hero() {
         Every developer has abandoned a project. <br />
         Bury it. Turn the page.
       </p>
-      <LinkButton to="/new-grave">🪦 Dig a grave - It's Free</LinkButton>
-
+      <LinkButton to="/new-grave" size="lg">
+        🪦 Dig a grave - It's Free
+      </LinkButton>
       <span className={styles["text-small"]}>
         No credit card required. Just bring your corpses.
       </span>

@@ -66,3 +66,16 @@
   color: var(--color-accent-warm);
   background: rgba(245, 194, 122, 0.05);
 }
+
+.button-sm {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+}
+.button-md {
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+}
+.button-lg {
+  font-size: 1.25rem;
+  padding: 1rem 1.5rem;
+}

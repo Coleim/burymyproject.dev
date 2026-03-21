@@ -3,16 +3,14 @@ import { Link } from "react-router-dom";
 import { LinkButton } from "./LinkButton";
 import styles from "./Navbar.module.css";
 
-type NavbarProps = {};
-
-export function Navbar({}: NavbarProps) {
+export function Navbar() {
   return (
     <nav className={styles.navbar}>
       <Link to="/" className={styles["navbar-brand"]}>
         <img src={logo} alt="Sideplot logo" className={styles["navbar-logo"]} />
         <span className={styles["navbar-name"]}>burymyproject.dev</span>
       </Link>
-
+      <div></div>
       <div className={styles["navbar-actions"]}>
         <LinkButton to="/login" variant="secondary">
           Log In

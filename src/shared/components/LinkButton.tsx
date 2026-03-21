@@ -7,6 +7,7 @@ type LinkButtonProps = {
   children: React.ReactNode;
   className?: string;
   ariaLabel?: string;
+  size?: "sm" | "md" | "lg";
 } & Omit<React.ComponentProps<typeof Link>, "to" | "className">;
 
 export function LinkButton({
@@ -15,12 +16,13 @@ export function LinkButton({
   children,
   className,
   ariaLabel,
+  size = "sm",
   ...props
 }: LinkButtonProps) {
   return (
     <Link
       to={to}
-      className={`${styles[`button-${variant}`]} ${className ?? ""}`}
+      className={`${styles[`button-${variant}`]} ${styles[`button-${size}`]} ${className ?? ""}`}
       aria-label={ariaLabel}
       {...props}
     >
