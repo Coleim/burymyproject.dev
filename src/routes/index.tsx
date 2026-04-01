@@ -1,3 +1,5 @@
+import { LoginPage } from "@/features/auth/LoginPage";
+import { SignUpPage } from "@/features/auth/SignUpPage";
 import { LandingPage } from "@/features/landing/LandingPage";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
@@ -6,8 +8,8 @@ export function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        {/* <Route path="/login" element={<LoginPage />} /> */}
-        {/* <Route path="/signup" element={<SignUpPage />} /> */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
         {/* <Route path="/dashboard" element={<Dashboard />} /> */}
         {/* <Route path="/new" element={<NewProjectPage />} /> */}
         {/* <Route path="/stats" element={<StatsPage />} /> */}
