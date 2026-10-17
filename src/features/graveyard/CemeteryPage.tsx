@@ -1,3 +1,4 @@
+import { LinkButton } from "@/shared/components/LinkButton";
 import { Navbar } from "@/shared/components/Navbar";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { supabase } from "@/lib/supabase";
@@ -37,6 +38,7 @@ export function CemeteryPage() {
             <span className={styles.label}>The whole graveyard</span>
             <h1 className={styles.title}>Cemetery</h1>
           </div>
+          <LinkButton to="/graves/new">🪦 Bury New Project</LinkButton>
         </div>
 
         {graves === null && (

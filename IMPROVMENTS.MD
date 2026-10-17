@@ -7,7 +7,7 @@
 
 - [x] Bouton "Global cemetery" a renomer => cemetery 
 
-- Le bouton "bury new project" de my graveyard doit aussi se trouver dans le global cemetery
+- [x] Le bouton "bury new project" de my graveyard doit aussi se trouver dans le global cemetery
 
 - Page /graves/new 
     => le fond n'as pas le meme CSS que les autres pages et donc ca donne un layout shift.
