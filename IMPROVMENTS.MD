@@ -3,7 +3,7 @@
 - [x] Rajouter les liens: Twitter: https://x.com/coleim_ninja - GitHub: https://github.com/Coleim ; linkedin: https://www.linkedin.com/in/clement-oliva/
 - [x] Privacy => a generer
 
-- favicon a mettre a jour avec la meme que le header
+- [x] favicon a mettre a jour avec la meme que le header
 
 - Bouton "Global cemetery" a renomer => cemetery 
 
