@@ -116,8 +116,27 @@ export function LandingPage() {
             </span>
           </div>
           <div className={styles["footer-links"]}>
-            <a href="#">Twitter</a>
-            <a href="#">GitHub</a>
+            <a
+              href="https://x.com/coleim_ninja"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Twitter
+            </a>
+            <a
+              href="https://github.com/Coleim"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub
+            </a>
+            <a
+              href="https://www.linkedin.com/in/clement-oliva/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              LinkedIn
+            </a>
             <a href="#">Privacy</a>
           </div>
         </footer>
