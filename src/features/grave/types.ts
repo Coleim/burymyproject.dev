@@ -12,4 +12,6 @@ export type Grave = {
   tech_stack: string[];
   public_slug: string;
   is_public: boolean;
+  tombstone_bg: string;
+  tombstone_fg: string;
 };

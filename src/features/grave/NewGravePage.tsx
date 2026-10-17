@@ -2,6 +2,7 @@ import { useAuth } from "@/features/auth/useAuth";
 import { Navbar } from "@/shared/components/Navbar";
 import { supabase } from "@/lib/supabase";
 import type { GraveFormValues } from "@/lib/schemas/grave";
+import type { GravePair } from "@/shared/lib/randomGrave";
 import { useNavigate } from "react-router-dom";
 import { GraveForm } from "./GraveForm";
 import styles from "./GraveForm.module.css";
@@ -10,7 +11,7 @@ export function NewGravePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  async function handleSubmit(values: GraveFormValues) {
+  async function handleSubmit(values: GraveFormValues, tombstone: GravePair) {
     if (!user) return;
 
     const { data, error } = await supabase
@@ -25,6 +26,8 @@ export function NewGravePage() {
         cause: values.cause || null,
         tech_stack: values.tech_stack,
         is_public: values.is_public,
+        tombstone_bg: tombstone.bg,
+        tombstone_fg: tombstone.fg,
       })
       .select("public_slug")
       .single();

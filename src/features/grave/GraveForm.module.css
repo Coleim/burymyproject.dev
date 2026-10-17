@@ -104,6 +104,13 @@
   }
 }
 
+.choose-tombstone {
+  width: 100%;
+  justify-content: center;
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .row {
   display: flex;
   gap: 1rem;

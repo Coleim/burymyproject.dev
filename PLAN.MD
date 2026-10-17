@@ -51,6 +51,8 @@ create table public.graves (
   tech_stack   text[] not null default '{}',
   public_slug  text unique not null default translate(encode(gen_random_bytes(6), 'base64'), '+/=', '-_'),
   is_public    boolean not null default true,
+  tombstone_bg text not null default 'grave_bg_01.png',  -- assigned once at creation, fixed forever (not user-editable yet)
+  tombstone_fg text not null default 'grave_01.png',
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
@@ -340,6 +342,10 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 ### CI
 
 Intégré dans `.github/workflows/deploy.yml` (job `test`), bloque le déploiement si lint/tsc/unit/e2e échouent.
+
+## Features à venir (non prioritaires)
+
+- **Choisir sa tombe** : actuellement, l'image de tombe (fond + premier plan) est assignée aléatoirement à la création et fixée définitivement (colonnes `tombstone_bg`/`tombstone_fg` sur `graves`). Un bouton désactivé "🔒 Choose your tombstone" est déjà présent dans `/graves/new` pour montrer que cette fonctionnalité arrivera. Prévu comme **feature payante** : permettre à l'utilisateur de choisir manuellement son image de tombe parmi la collection (ou en débloquer plus).
 
 ## Rappel de méthode
 

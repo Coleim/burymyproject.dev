@@ -85,6 +85,8 @@ export type MockGrave = {
   tech_stack: string[];
   public_slug: string;
   is_public: boolean;
+  tombstone_bg: string;
+  tombstone_fg: string;
   created_at: string;
   updated_at: string;
 };
@@ -102,6 +104,8 @@ export function makeGrave(overrides: Partial<MockGrave> = {}): MockGrave {
     tech_stack: ["React", "Node"],
     public_slug: "devflow-abc123",
     is_public: true,
+    tombstone_bg: "grave_bg_01.png",
+    tombstone_fg: "grave_01.png",
     created_at: now(),
     updated_at: now(),
     ...overrides,

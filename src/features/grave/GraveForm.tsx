@@ -2,12 +2,14 @@ import { Button } from "@/shared/components/Button";
 import { TagInput } from "@/shared/components/TagInput";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { graveSchema, type GraveFormValues } from "@/lib/schemas/grave";
+import { pickRandomGravePair, type GravePair } from "@/shared/lib/randomGrave";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import styles from "./GraveForm.module.css";
 
 type GraveFormProps = {
-  onSubmit: (values: GraveFormValues) => Promise<void>;
+  onSubmit: (values: GraveFormValues, tombstone: GravePair) => Promise<void>;
   submitLabel?: string;
   submittingLabel?: string;
 };
@@ -17,6 +19,8 @@ export function GraveForm({
   submitLabel = "Bury the project",
   submittingLabel = "Burying in progress...",
 }: GraveFormProps) {
+  const [tombstone] = useState<GravePair>(() => pickRandomGravePair());
+
   const {
     register,
     handleSubmit,
@@ -36,7 +40,7 @@ export function GraveForm({
 
   async function handle(values: GraveFormValues) {
     try {
-      await onSubmit(values);
+      await onSubmit(values, tombstone);
     } catch {
       setError("root", {
         message: "Something went wrong. Please try again in a moment.",
@@ -54,8 +58,19 @@ export function GraveForm({
           endDate={preview.died}
           epitaph={preview.epitaph}
           cause={preview.cause}
+          bgImage={tombstone.bg}
+          fgImage={tombstone.fg}
           featured
         />
+        <Button
+          type="button"
+          variant="secondary"
+          className={styles["choose-tombstone"]}
+          disabled
+          aria-label="Choose your tombstone (coming soon)"
+        >
+          🔒 Choose your tombstone
+        </Button>
       </div>
 
       <form

@@ -78,6 +78,8 @@ export function LandingPage() {
                   endDate={grave.died}
                   epitaph={grave.epitaph}
                   cause={grave.cause}
+                  bgImage={grave.tombstone_bg}
+                  fgImage={grave.tombstone_fg}
                   slug={grave.public_slug}
                   featured={i === 1}
                 />

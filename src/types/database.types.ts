@@ -14,6 +14,8 @@ export type Database = {
           tech_stack: string[];
           public_slug: string;
           is_public: boolean;
+          tombstone_bg: string;
+          tombstone_fg: string;
           created_at: string;
           updated_at: string;
         };
@@ -29,6 +31,8 @@ export type Database = {
           tech_stack?: string[];
           public_slug?: string;
           is_public?: boolean;
+          tombstone_bg: string;
+          tombstone_fg: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -44,6 +48,8 @@ export type Database = {
           tech_stack?: string[];
           public_slug?: string;
           is_public?: boolean;
+          tombstone_bg?: string;
+          tombstone_fg?: string;
           created_at?: string;
           updated_at?: string;
         };
