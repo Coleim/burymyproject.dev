@@ -37,6 +37,9 @@ export function SignUpPage() {
     const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
+      options: {
+        emailRedirectTo: window.location.origin + import.meta.env.BASE_URL,
+      },
     });
 
     if (error) {
