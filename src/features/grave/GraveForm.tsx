@@ -1,5 +1,6 @@
 import { Button } from "@/shared/components/Button";
 import { TagInput } from "@/shared/components/TagInput";
+import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { graveSchema, type GraveFormValues } from "@/lib/schemas/grave";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
@@ -21,6 +22,7 @@ export function GraveForm({
     handleSubmit,
     control,
     setError,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<GraveFormValues>({
     resolver: zodResolver(graveSchema),
@@ -29,6 +31,8 @@ export function GraveForm({
       is_public: true,
     },
   });
+
+  const preview = watch();
 
   async function handle(values: GraveFormValues) {
     try {
@@ -41,7 +45,24 @@ export function GraveForm({
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit(handle)} noValidate>
+    <div className={styles.layout}>
+      <div className={styles.preview}>
+        <span className={styles["preview-label"]}>Live preview</span>
+        <TombstoneCard
+          name={preview.name || "Your Project"}
+          startDate={preview.born}
+          endDate={preview.died}
+          epitaph={preview.epitaph}
+          cause={preview.cause}
+          featured
+        />
+      </div>
+
+      <form
+        className={styles.form}
+        onSubmit={handleSubmit(handle)}
+        noValidate
+      >
       <div className={styles.field}>
         <label className={styles.label} htmlFor="name">
           Project name
@@ -63,15 +84,22 @@ export function GraveForm({
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="epitaph">
-          Epitaph (optional)
+          Epitaph
         </label>
         <input
           id="epitaph"
           type="text"
-          className={styles.input}
+          className={`${styles.input} ${errors.epitaph ? styles["input-error"] : ""}`}
+          aria-describedby={errors.epitaph ? "epitaph-error" : undefined}
+          aria-invalid={!!errors.epitaph}
           placeholder="It lived fast, it died in production."
           {...register("epitaph")}
         />
+        {errors.epitaph && (
+          <span id="epitaph-error" className={styles["error-message"]}>
+            {errors.epitaph.message}
+          </span>
+        )}
       </div>
 
       <div className={styles.field}>
@@ -88,18 +116,25 @@ export function GraveForm({
       <div className={styles.row}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="born">
-            Date of birth (optional)
+            Date of birth
           </label>
           <input
             id="born"
             type="date"
-            className={styles.input}
+            className={`${styles.input} ${errors.born ? styles["input-error"] : ""}`}
+            aria-describedby={errors.born ? "born-error" : undefined}
+            aria-invalid={!!errors.born}
             {...register("born")}
           />
+          {errors.born && (
+            <span id="born-error" className={styles["error-message"]}>
+              {errors.born.message}
+            </span>
+          )}
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="died">
-            Date of death (optional)
+            Date of death
           </label>
           <input
             id="died"
@@ -119,15 +154,22 @@ export function GraveForm({
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="cause">
-          Cause of death (optional)
+          Cause of death
         </label>
         <input
           id="cause"
           type="text"
-          className={styles.input}
+          className={`${styles.input} ${errors.cause ? styles["input-error"] : ""}`}
+          aria-describedby={errors.cause ? "cause-error" : undefined}
+          aria-invalid={!!errors.cause}
           placeholder="Shiny New Idea Syndrome"
           {...register("cause")}
         />
+        {errors.cause && (
+          <span id="cause-error" className={styles["error-message"]}>
+            {errors.cause.message}
+          </span>
+        )}
       </div>
 
       <div className={styles.field}>
@@ -164,6 +206,7 @@ export function GraveForm({
       >
         {isSubmitting ? submittingLabel : submitLabel}
       </Button>
-    </form>
+      </form>
+    </div>
   );
 }

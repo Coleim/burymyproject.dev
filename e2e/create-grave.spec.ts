@@ -38,6 +38,10 @@ test("creates a grave and redirects to its public page", async ({ page }) => {
 
   await page.goto("graves/new");
   await page.getByLabel("Project name").fill(grave.name);
+  await page.getByLabel("Epitaph").fill(grave.epitaph ?? "");
+  await page.getByLabel("Date of birth").fill(grave.born ?? "");
+  await page.getByLabel("Date of death").fill(grave.died ?? "");
+  await page.getByLabel("Cause of death").fill(grave.cause ?? "");
   await page.getByRole("button", { name: /bury the project/i }).click();
 
   await expect(page).toHaveURL(new RegExp(`/graves/${grave.public_slug}$`));

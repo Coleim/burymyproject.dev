@@ -43,6 +43,7 @@
 html,
 body {
   height: 100%;
+  scrollbar-gutter: stable;
   font-family: "Roboto", sans-serif;
   font-optical-sizing: auto;
   font-weight: 500;
