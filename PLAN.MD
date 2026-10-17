@@ -8,7 +8,7 @@ BuryMyProject.dev est une app web où les développeurs créent des "tombes" pou
 
 **Périmètre v1**
 
-- Authentification email/password via Supabase Auth
+- Authentification email/password via Supabase Auth, + Google OAuth (en cours de finalisation, cf. Milestone 1)
 - CRUD sur les tombes (table `graves` — pas de notion de cimetières multiples, cf. section Architecture)
 - Affichage public d'une tombe via lien partageable (`/graves/:slug`)
 - Cimetière global public (`/cemetery`) et cimetière personnel (`/my-graves`)
@@ -207,13 +207,34 @@ Pas de middleware serveur (CSR pur) : la protection de route est gérée par `Pr
 - [x] RLS complet (SELECT/INSERT/UPDATE/DELETE)
 - [x] Types TypeScript manuels alignés (`src/types/database.types.ts`, `src/features/grave/types.ts`)
 
-### Milestone 1 — Auth ✅ fait
+### Milestone 1 — Auth ✅ fait (⚠️ email non fiable, cf. ci-dessous)
 
 - [x] `AuthProvider`/`useAuth`/`ProtectedRoute`
 - [x] `LoginPage` / `SignUpPage` stylées, validées (zod + react-hook-form)
 - [x] Logout + redirect `/`
 - [x] `Navbar` dynamique selon session
+- [x] `emailRedirectTo` explicite dans `signUp()` (origin + base path, robuste multi-environnement)
+- [x] Config Supabase Auth : `site_url` + `uri_allow_list` pointent vers GitHub Pages (+ localhost dev/e2e)
+- [x] `GoogleSignInButton` ajouté sur Login/SignUp (code prêt, cf. "Google OAuth — reste à faire")
 - [ ] **Test manuel restant** : créer un compte réel, confirmer l'email, se connecter/déconnecter, vérifier les redirections `redirectTo`
+
+#### ⚠️ Problème connu : emails de confirmation peu fiables
+
+Le projet Supabase n'a **pas de SMTP personnalisé configuré** (`smtp_host` vide). Il utilise le service email par défaut de Supabase, limité à **2 emails/heure** et prévu uniquement pour du test — pas pour de la prod. Conséquence observée : signup sans réception d'email, lien de confirmation expiré/invalide.
+
+Décision prise : **mettre Resend de côté pour l'instant** (nécessite un nom de domaine vérifié pour envoyer vers de vrais utilisateurs — `coleim.github.io` ne peut pas être vérifié, la zone DNS appartient à GitHub). On contourne via Google OAuth en attendant.
+
+**Reste à faire plus tard** : trouver une vraie solution d'envoi d'email (acheter un petit domaine dédié type `burymyproject.dev` chez un registrar, le vérifier sur Resend/un autre fournisseur SMTP transactionnel, puis reconfigurer `smtp_host`/`smtp_user`/`smtp_pass` via l'API Management Supabase) pour que l'auth email/password redevienne pleinement fiable en plus de Google OAuth.
+
+#### Google OAuth — reste à faire
+
+Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` et `SignUpPage`, appelle `supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: origin + BASE_URL } })`). Il manque la configuration :
+
+- [ ] **Google Cloud Console** : créer un projet (ou réutiliser), configurer l'OAuth consent screen (type External), créer des identifiants **OAuth client ID** (type Web application)
+- [ ] **Authorized redirect URI** à renseigner exactement : `https://bibzxeryywqvjwoejgwz.supabase.co/auth/v1/callback`
+- [ ] Récupérer le **Client ID** et le **Client Secret**
+- [ ] Activer le provider côté Supabase via l'API Management (`PATCH /v1/projects/{ref}/config/auth` avec `external_google_enabled: true`, `external_google_client_id`, `external_google_secret`)
+- [ ] **Test** : bouton "Continue with Google" sur `/login` et `/signup`, vérifier la redirection complète (Google → Supabase callback → retour sur l'app, session créée, redirection vers `/my-graves`)
 
 ### Milestone 2 — Créer une tombe ✅ fait
 
