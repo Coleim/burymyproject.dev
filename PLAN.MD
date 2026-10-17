@@ -298,7 +298,7 @@ Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` 
 - [ ] Cache (Redis/Upstash) pour les stats globales (nb de tombes, cause la plus fréquente)
 - [ ] CDN pour les assets (`grave_*.png`), conversion WebP/AVIF si pas déjà fait
 - [ ] Observabilité : logs structurés, alerting, dashboard Supabase
-- [ ] Tests automatisés contre les policies RLS (pas seulement manuels)
+- [x] Tests automatisés contre les policies RLS (pas seulement manuels) — cf. `scripts/rls-integration-test.mjs`
 - [ ] Rate limiting renforcé (Edge Functions / WAF Cloudflare)
 - [ ] Dimensionner les plans Supabase/hosting selon la charge réelle
 
@@ -343,9 +343,17 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
   - `e2e/create-grave.spec.ts` — connexion → création d'une tombe → redirection vers `/graves/:slug`
   - `e2e/404.spec.ts` — route inconnue et slug de tombe inexistant
 
+### Intégration — RLS contre le vrai Supabase
+
+- `scripts/rls-integration-test.mjs` (`npm run test:rls`) : contrairement aux tests unitaires/E2E (mockés), ce script tourne contre le **vrai projet Supabase**
+- Utilise la clé `service_role` **uniquement** pour créer/supprimer 2 utilisateurs de test déjà confirmés (`auth.admin.createUser({ email_confirm: true })`, bypass du mailer — pas de dépendance au rate limit d'envoi d'email)
+- Toutes les assertions utilisent ensuite des clients **anon** connectés normalement (comme un vrai navigateur), pour valider réellement les policies RLS : lecture publique/privée, cross-user read/update/delete
+- Nettoyage systématique en `finally` (users + graves supprimés), même si une assertion échoue
+- Nécessite le secret `SUPABASE_SERVICE_ROLE_KEY` en plus des deux secrets existants
+
 ### CI
 
-Intégré dans `.github/workflows/deploy.yml` (job `test`), bloque le déploiement si lint/tsc/unit/e2e échouent.
+Intégré dans `.github/workflows/deploy.yml` (job `test`), bloque le déploiement si lint/tsc/unit/rls/e2e échouent.
 
 ## Features à venir (non prioritaires)
 

@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:rls": "node scripts/rls-integration-test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.2",
