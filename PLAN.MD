@@ -264,7 +264,8 @@ Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` 
 - [ ] Responsive fin sur petits écrans (actuellement hérité du CSS existant, pas re-testé composant par composant)
 - [ ] Métadonnées Open Graph dynamiques par tombe (voir Scaling, Phase 2)
 - [ ] Headers de sécurité (`X-Frame-Options`, etc.) — à ajouter en meta tags ou via un futur hébergeur supportant les headers custom (GitHub Pages ne permet pas de headers custom nativement)
-
+- [ ] Verification d'architecture et scalabilités
+- [ ] Review du project : Good practices a verifier, tels que KISS, YAGNI, DRY, etc ...
 ## Mise en production et scaling (1 → 1 000 → 10 000 users)
 
 ### Phase 0 — Mise en production initiale
@@ -276,6 +277,7 @@ Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` 
 - [ ] Monitoring erreurs front (Sentry free tier ou équivalent)
 - [ ] Vérifier le plan Supabase Free (backups, quotas) et activer un export manuel périodique si besoin
 - [ ] Analytics simple (Plausible/Umami) pour mesurer l'usage réel
+- [ ] Test de securité (pentests)
 
 ### Phase 1 — Jusqu'à ~1 000 users
 
@@ -354,7 +356,4 @@ Intégré dans `.github/workflows/deploy.yml` (job `test`), bloque le déploieme
 
 
 
-# Scale UP
-- Test de securité (pentests)
-- Verification d'architecture et scalabilités
-- Review du project : Good practices a verifier, tels que KISS, YAGNI, DRY, etc ...
+
