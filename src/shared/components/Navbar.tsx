@@ -33,7 +33,7 @@ export function Navbar() {
               My Graveyard
             </LinkButton>
             <LinkButton to="/cemetery" variant="secondary">
-              Global Cemetery
+              Cemetery
             </LinkButton>
             <Button
               variant="accent"

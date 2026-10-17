@@ -35,7 +35,7 @@ export function CemeteryPage() {
         <div className={styles.header}>
           <div className={styles.heading}>
             <span className={styles.label}>The whole graveyard</span>
-            <h1 className={styles.title}>Global Cemetery</h1>
+            <h1 className={styles.title}>Cemetery</h1>
           </div>
         </div>
 
