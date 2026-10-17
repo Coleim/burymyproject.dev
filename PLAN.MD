@@ -162,8 +162,10 @@ src/
 │       └── randomGrave.ts             # pairing aléatoire des images de tombes
 ├── lib/
 │   ├── supabase.ts                    # client Supabase typé
-│   └── schemas/
-│       └── grave.ts                   # schema zod
+│   ├── schemas/
+│   │   └── grave.ts                   # schema zod
+│   └── constants/
+│       └── graveContent.ts            # listes statiques d'epitaphs/causes pour le bouton "✨ Generate"
 └── types/
     └── database.types.ts
 ```
@@ -218,7 +220,7 @@ Pas de middleware serveur (CSR pur) : la protection de route est gérée par `Pr
 - [x] `emailRedirectTo` explicite dans `signUp()` (origin + base path, robuste multi-environnement)
 - [x] Config Supabase Auth : `site_url` + `uri_allow_list` pointent vers GitHub Pages (+ localhost dev/e2e)
 - [x] `GoogleSignInButton` ajouté sur Login/SignUp (code prêt, cf. "Google OAuth — reste à faire")
-- [ ] **Test manuel restant** : créer un compte réel, confirmer l'email, se connecter/déconnecter, vérifier les redirections `redirectTo`
+- [x] **Test manuel** : signup, login, création de tombe publique/privée, RLS (lecture/update/delete croisés entre utilisateurs) — tout validé via script contre le vrai projet Supabase le 17/10/2026. Seul point non testable automatiquement : le vrai flow d'email de confirmation (bloqué par le rate limit du mailer par défaut, cf. Milestone 1) — contourné via `mailer_autoconfirm` temporaire pour le test, remis à `false` immédiatement après.
 
 #### ⚠️ Problème connu : emails de confirmation peu fiables
 
@@ -243,7 +245,7 @@ Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` 
 - [x] `lib/schemas/grave.ts` (zod)
 - [x] `GraveForm` (name, epitaph, description, born, died, cause, tech_stack en tags, is_public)
 - [x] `/graves/new` protégée, insert Supabase, redirection vers `/graves/:slug`
-- [ ] **Test manuel restant** : créer une tombe avec un compte confirmé, vérifier la présence en BDD et la redirection
+- [x] **Test manuel** : création de tombe validée en conditions réelles (cf. Milestone 1)
 
 ### Milestone 3 — Afficher les tombes ✅ fait
 
@@ -252,7 +254,7 @@ Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` 
 - [x] `/my-graves` (grille, suppression, empty state)
 - [x] `/cemetery` (grille publique, limite 24, pas encore de pagination infinie)
 - [x] Landing : "Recently Buried" branché sur les vraies données
-- [ ] **Test manuel restant** : vérifier qu'une tombe privée n'est pas accessible par un autre utilisateur via `/graves/:slug`
+- [x] **Test manuel** : confirmé qu'une tombe privée n'est accessible ni par un visiteur anonyme ni par un autre utilisateur authentifié (cf. Milestone 1)
 
 ### Milestone 4 — Polish UX & a11y ⚠️ partiel
 
@@ -348,6 +350,8 @@ Intégré dans `.github/workflows/deploy.yml` (job `test`), bloque le déploieme
 ## Features à venir (non prioritaires)
 
 - **Choisir sa tombe** : actuellement, l'image de tombe (fond + premier plan) est assignée aléatoirement à la création et fixée définitivement (colonnes `tombstone_bg`/`tombstone_fg` sur `graves`). Un bouton désactivé "🔒 Choose your tombstone" est déjà présent dans `/graves/new` pour montrer que cette fonctionnalité arrivera. Prévu comme **feature payante** : permettre à l'utilisateur de choisir manuellement son image de tombe parmi la collection (ou en débloquer plus).
+- **Génération IA d'epitaph/cause** : le bouton "✨ Generate" pioche actuellement dans des listes statiques (`src/lib/constants/graveContent.ts`, ~20 phrases chacune). Prévu à terme : remplacer par un vrai appel à un modèle IA pour générer une phrase contextuelle (basée sur le nom du projet, la stack technique, etc.), sans changer l'UX du bouton.
+- **Éditer une tombe existante** (cf. `FEATURES.MD`) : actuellement une tombe créée ne peut plus être modifiée après coup (seulement supprimée). À concevoir : formulaire d'édition réutilisant `GraveForm`, policy RLS `UPDATE` déjà en place côté BDD.
 
 ## Rappel de méthode
 
