@@ -1,16 +1,24 @@
 .content {
   position: relative;
   min-height: 100vh;
-  background-image: url("../../assets/bg-home-4k.webp");
-  background-repeat: no-repeat;
-  background-position: center bottom;
-  background-size: cover;
-  background-attachment: fixed;
   display: flex;
   flex-direction: column;
 }
 
 .content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  background-image: url("../../assets/bg-home-4k.webp");
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: cover;
+}
+
+.content::after {
   content: "";
   position: absolute;
   inset: 0;
