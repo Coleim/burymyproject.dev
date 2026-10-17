@@ -5,6 +5,7 @@ import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import type { Grave } from "@/features/grave/types";
+import { Link } from "react-router-dom";
 import { Hero } from "./Hero";
 import styles from "./LandingPage.module.css";
 
@@ -137,7 +138,7 @@ export function LandingPage() {
             >
               LinkedIn
             </a>
-            <a href="#">Privacy</a>
+            <Link to="/privacy">Privacy</Link>
           </div>
         </footer>
       </div>
