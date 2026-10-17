@@ -2,10 +2,13 @@ import { useAuth } from "@/features/auth/useAuth";
 import { Navbar } from "@/shared/components/Navbar";
 import { LinkButton } from "@/shared/components/LinkButton";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
+import { TombstoneCardSkeleton } from "@/shared/components/TombstoneCardSkeleton";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import type { Grave } from "@/features/grave/types";
 import styles from "@/shared/components/GraveGrid.module.css";
+
+const SKELETON_COUNT = 8;
 
 export function MyGravesPage() {
   const { user } = useAuth();
@@ -29,12 +32,6 @@ export function MyGravesPage() {
     };
   }, [user]);
 
-  async function handleDelete(id: string) {
-    if (!confirm("Permanently dig up this project?")) return;
-    await supabase.from("graves").delete().eq("id", id);
-    setGraves((prev) => prev?.filter((g) => g.id !== id) ?? null);
-  }
-
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
@@ -48,7 +45,11 @@ export function MyGravesPage() {
         </div>
 
         {graves === null && (
-          <div className={styles.loading}>Loading your graveyard...</div>
+          <div className={styles.grid}>
+            {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+              <TombstoneCardSkeleton key={i} />
+            ))}
+          </div>
         )}
 
         {graves !== null && graves.length === 0 && (
@@ -64,26 +65,17 @@ export function MyGravesPage() {
         {graves !== null && graves.length > 0 && (
           <div className={styles.grid}>
             {graves.map((grave) => (
-              <div key={grave.id} className={styles.card}>
-                <TombstoneCard
-                  name={grave.name}
-                  startDate={grave.born}
-                  endDate={grave.died}
-                  epitaph={grave.epitaph}
-                  cause={grave.cause}
-                  bgImage={grave.tombstone_bg}
-                  fgImage={grave.tombstone_fg}
-                  slug={grave.public_slug}
-                />
-                <button
-                  type="button"
-                  className={styles["delete-button"]}
-                  onClick={() => handleDelete(grave.id)}
-                  aria-label={`Delete the grave of ${grave.name}`}
-                >
-                  Delete
-                </button>
-              </div>
+              <TombstoneCard
+                key={grave.id}
+                name={grave.name}
+                startDate={grave.born}
+                endDate={grave.died}
+                epitaph={grave.epitaph}
+                cause={grave.cause}
+                bgImage={grave.tombstone_bg}
+                fgImage={grave.tombstone_fg}
+                slug={grave.public_slug}
+              />
             ))}
           </div>
         )}

@@ -1,12 +1,14 @@
 import { LinkButton } from "@/shared/components/LinkButton";
 import { Navbar } from "@/shared/components/Navbar";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
+import { TombstoneCardSkeleton } from "@/shared/components/TombstoneCardSkeleton";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import type { Grave } from "@/features/grave/types";
 import styles from "@/shared/components/GraveGrid.module.css";
 
 const PAGE_SIZE = 24;
+const SKELETON_COUNT = 8;
 
 export function CemeteryPage() {
   const [graves, setGraves] = useState<Grave[] | null>(null);
@@ -42,7 +44,11 @@ export function CemeteryPage() {
         </div>
 
         {graves === null && (
-          <div className={styles.loading}>Opening the gates...</div>
+          <div className={styles.grid}>
+            {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+              <TombstoneCardSkeleton key={i} />
+            ))}
+          </div>
         )}
 
         {graves !== null && graves.length === 0 && (
