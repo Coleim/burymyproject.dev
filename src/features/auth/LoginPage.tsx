@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { AuthLayout } from "./AuthLayout";
+import { GoogleSignInButton } from "./GoogleSignInButton";
 import styles from "./AuthLayout.module.css";
 
 const loginSchema = z.object({
@@ -111,6 +112,9 @@ export function LoginPage() {
       <p className={styles["footer-link"]}>
         Don't have an account yet? <Link to="/signup">Sign up</Link>
       </p>
+
+      <div className={styles.divider}>or</div>
+      <GoogleSignInButton />
     </AuthLayout>
   );
 }
