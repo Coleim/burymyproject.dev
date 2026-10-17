@@ -84,6 +84,34 @@
   user-select: none;
 }
 
+.proof-skeleton {
+  display: inline-block;
+  width: 140px;
+  height: 1.1rem;
+  border-radius: 4px;
+  background: linear-gradient(
+    100deg,
+    var(--color-bg-secondary) 30%,
+    var(--color-bg-card) 50%,
+    var(--color-bg-secondary) 70%
+  );
+  background-size: 200% 100%;
+  animation: proof-shimmer 1.4s ease-in-out infinite;
+}
+
+.proof-skeleton--wide {
+  width: 220px;
+}
+
+@keyframes proof-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 @media (max-width: 640px) {
   .social-proof {
     flex-direction: column;

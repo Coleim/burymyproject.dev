@@ -19,5 +19,5 @@
 - [x] Les images des tombes qui sont assignées, on les voit changer de maniere aleatoires a chaque refresh. Ce n'est pas bon. A la creation d'une nouvelle tombe, il faut lui assigner une image de tombe. D'ailleurs, cette image doit etre affichée au moment de la creation de la tombe. Pas de possibilité de changer maintenant (on rajoutera plus tard une option payante pour choisir sa tombe, noter ca comme feature a venir dans le PLAN ; et ajouter un bouton 'choisir sa tombe' en grisé ou autre pour montrer que ca viendra plus tard, et montrer aussi que ce sera payant, mais sans texte ).  
 
 
-- Les chiffres de la home pages et les "most common..." sont faux. Il faut qu'ils soient recupérés de supabase.
+- [x] Les chiffres de la home pages et les "most common..." sont faux. Il faut qu'ils soient recupérés de supabase.
 

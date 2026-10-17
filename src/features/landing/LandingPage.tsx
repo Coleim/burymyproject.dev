@@ -9,8 +9,32 @@ import { Link } from "react-router-dom";
 import { Hero } from "./Hero";
 import styles from "./LandingPage.module.css";
 
+type HomeStats = {
+  totalGraves: number;
+  developers: number;
+  topCause: string | null;
+};
+
+function computeTopCause(causes: (string | null)[]): string | null {
+  const counts = new Map<string, number>();
+  for (const cause of causes) {
+    if (!cause) continue;
+    counts.set(cause, (counts.get(cause) ?? 0) + 1);
+  }
+  let top: string | null = null;
+  let max = 0;
+  for (const [cause, count] of counts) {
+    if (count > max) {
+      max = count;
+      top = cause;
+    }
+  }
+  return top;
+}
+
 export function LandingPage() {
   const [recentGraves, setRecentGraves] = useState<Grave[] | null>(null);
+  const [stats, setStats] = useState<HomeStats | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,6 +49,19 @@ export function LandingPage() {
         if (!cancelled) setRecentGraves(data ?? []);
       });
 
+    supabase
+      .from("graves")
+      .select("author_id, cause")
+      .eq("is_public", true)
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        setStats({
+          totalGraves: data.length,
+          developers: new Set(data.map((g) => g.author_id)).size,
+          topCause: computeTopCause(data.map((g) => g.cause)),
+        });
+      });
+
     return () => {
       cancelled = true;
     };
@@ -36,31 +73,68 @@ export function LandingPage() {
         <Navbar />
         <Hero />
         <div className={styles["social-proof"]}>
-          <div className={styles["proof-item"]}>
-            <span className={styles["proof-icon"]}>⚰️</span>
-            <span className={styles["proof-value"]}>1,243</span>
-            <span className={styles["proof-label"]}>projects buried</span>
-          </div>
+          {stats ? (
+            <>
+              <div className={styles["proof-item"]}>
+                <span className={styles["proof-icon"]}>⚰️</span>
+                <span
+                  className={styles["proof-value"]}
+                  data-testid="stat-total-graves"
+                >
+                  {stats.totalGraves.toLocaleString()}
+                </span>
+                <span className={styles["proof-label"]}>projects buried</span>
+              </div>
 
-          <span className={styles["proof-divider"]}>✦</span>
+              <span className={styles["proof-divider"]}>✦</span>
 
-          <div className={styles["proof-item"]}>
-            <span className={styles["proof-icon"]}>💀</span>
-            <span className={styles["proof-value"]}>638</span>
-            <span className={styles["proof-label"]}>developers</span>
-          </div>
+              <div className={styles["proof-item"]}>
+                <span className={styles["proof-icon"]}>💀</span>
+                <span
+                  className={styles["proof-value"]}
+                  data-testid="stat-developers"
+                >
+                  {stats.developers.toLocaleString()}
+                </span>
+                <span className={styles["proof-label"]}>developers</span>
+              </div>
 
-          <span className={styles["proof-divider"]}>✦</span>
+              {stats.topCause && (
+                <>
+                  <span className={styles["proof-divider"]}>✦</span>
 
-          <div className={styles["proof-item"]}>
-            <span className={styles["proof-icon"]}>☠️</span>
-            <span className={styles["proof-label"]}>
-              Most common cause of death:
-            </span>
-            <span className={styles["proof-highlight"]}>
-              Shiny New Idea Syndrome
-            </span>
-          </div>
+                  <div className={styles["proof-item"]}>
+                    <span className={styles["proof-icon"]}>☠️</span>
+                    <span className={styles["proof-label"]}>
+                      Most common cause of death:
+                    </span>
+                    <span
+                      className={styles["proof-highlight"]}
+                      data-testid="stat-top-cause"
+                    >
+                      {stats.topCause}
+                    </span>
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <div className={styles["proof-item"]}>
+                <span className={styles["proof-skeleton"]} />
+              </div>
+              <span className={styles["proof-divider"]}>✦</span>
+              <div className={styles["proof-item"]}>
+                <span className={styles["proof-skeleton"]} />
+              </div>
+              <span className={styles["proof-divider"]}>✦</span>
+              <div className={styles["proof-item"]}>
+                <span
+                  className={`${styles["proof-skeleton"]} ${styles["proof-skeleton--wide"]}`}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div className={styles["preview"]}>
