@@ -1,5 +1,8 @@
 .tombstone {
   width: fit-content;
+}
+
+.tombstone-link {
   cursor: pointer;
 }
 
@@ -11,7 +14,7 @@
   overflow: hidden;
 }
 
-.tombstone:hover .grave-bg {
+.tombstone-link:hover .grave-bg {
   filter: brightness(0.7);
 }
 
@@ -95,4 +98,27 @@
   opacity: 0.6;
   margin: 0;
   font-style: italic;
+}
+
+.skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: linear-gradient(
+    100deg,
+    var(--color-bg-secondary) 30%,
+    var(--color-bg-card) 50%,
+    var(--color-bg-secondary) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

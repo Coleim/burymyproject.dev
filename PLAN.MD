@@ -51,8 +51,8 @@ create table public.graves (
   tech_stack   text[] not null default '{}',
   public_slug  text unique not null default translate(encode(gen_random_bytes(6), 'base64'), '+/=', '-_'),
   is_public    boolean not null default true,
-  tombstone_bg text not null default 'grave_bg_01.png',  -- assigned once at creation, fixed forever (not user-editable yet)
-  tombstone_fg text not null default 'grave_01.png',
+  tombstone_bg text not null default 'grave_bg_01.webp',  -- assigned once at creation, fixed forever (not user-editable yet)
+  tombstone_fg text not null default 'grave_01.webp',
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );

@@ -1,8 +1,8 @@
-const graveBgModules = import.meta.glob("@/assets/graves/grave_bg_*.png", {
+const graveBgModules = import.meta.glob("@/assets/graves/grave_bg_*.webp", {
   eager: true,
   import: "default",
 });
-const graveFgModules = import.meta.glob("@/assets/graves/grave_[0-9]*.png", {
+const graveFgModules = import.meta.glob("@/assets/graves/grave_[0-9]*.webp", {
   eager: true,
   import: "default",
 });
