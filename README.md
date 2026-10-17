@@ -4,6 +4,8 @@
 
 Every developer has a folder full of half-finished ideas. `burymyproject.dev` gives them a dignified end: create a tombstone for your dead project, write its epitaph, list its cause of death and tech stack, and share a public link so the world can pay its respects.
 
+🔗 **Live**: [coleim.github.io/burymyproject.dev](https://coleim.github.io/burymyproject.dev/)
+
 ## Screenshots
 
 > Add real screenshots to `docs/screenshots/` and they'll show up here.
@@ -19,10 +21,12 @@ Every developer has a folder full of half-finished ideas. `burymyproject.dev` gi
 ## Features
 
 - 🪦 Create a tombstone for an abandoned project: name, epitaph, cause of death, tech stack, lifespan
+- ✨ "Generate" buttons to pick a random epitaph/cause of death, plus a live tombstone preview while filling the form
 - 🔗 Public, shareable link for each grave
 - 📜 "My Graveyard" — a private dashboard of everything you've buried
 - 🌍 "Global Cemetery" — browse every public grave buried by the community
-- 🔐 Email/password authentication (Supabase Auth)
+- 🔐 Email/password authentication (Supabase Auth), with Google sign-in support
+- 📊 Real-time home page stats (total graves, developers, most common cause of death) computed from Supabase
 
 ## Tech stack
 
@@ -33,6 +37,7 @@ Every developer has a folder full of half-finished ideas. `burymyproject.dev` gi
 - [react-hook-form](https://react-hook-form.com) + [zod](https://zod.dev)
 - [Vitest](https://vitest.dev) + [React Testing Library](https://testing-library.com/react) for unit tests
 - [Playwright](https://playwright.dev) for end-to-end tests
+- A standalone integration test script that validates Row Level Security policies against the real Supabase project
 - Deployed on [GitHub Pages](https://pages.github.com) via GitHub Actions
 
 See [`PLAN.MD`](./PLAN.MD) for the full technical plan, database schema, architecture, and roadmap.
@@ -57,7 +62,8 @@ npm run dev
 | `npm run test:unit` | Run unit tests (Vitest) |
 | `npm run test:unit:watch` | Run unit tests in watch mode |
 | `npm run test:e2e` | Run end-to-end tests (Playwright) |
+| `npm run test:rls` | Run RLS integration tests against the real Supabase project (requires `SUPABASE_SERVICE_ROLE_KEY`) |
 
 ## Deployment
 
-Pushing to `main` triggers `.github/workflows/deploy.yml`: lint + type-check + unit tests + e2e tests, then build and deploy to GitHub Pages. The deployment only runs if all tests pass.
+Pushing to `main` triggers `.github/workflows/deploy.yml`: lint + type-check + unit tests + RLS integration tests + e2e tests, then build and deploy to GitHub Pages. The deployment only runs if all tests pass.
