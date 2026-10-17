@@ -1,8 +1,5 @@
 .page {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  composes: page pageOverlay from "@/shared/styles/pageBackground.module.css";
 }
 
 .page::before {
@@ -16,14 +13,6 @@
   background-repeat: no-repeat;
   background-position: center bottom;
   background-size: cover;
-}
-
-.page::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--color-overlay-dark);
-  pointer-events: none;
 }
 
 .inner {
@@ -122,14 +111,14 @@
     var(--color-bg-secondary) 70%
   );
   background-size: 200% 100%;
-  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  animation: shimmer 1.4s ease-in-out infinite;
 }
 
 .skeleton-line--short {
   width: 60%;
 }
 
-@keyframes skeleton-shimmer {
+@keyframes shimmer {
   0% {
     background-position: 200% 0;
   }

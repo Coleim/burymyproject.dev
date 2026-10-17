@@ -267,7 +267,7 @@ Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` 
 - [ ] Métadonnées Open Graph dynamiques par tombe (voir Scaling, Phase 2)
 - [ ] Headers de sécurité (`X-Frame-Options`, etc.) — à ajouter en meta tags ou via un futur hébergeur supportant les headers custom (GitHub Pages ne permet pas de headers custom nativement)
 - [ ] Verification d'architecture et scalabilités
-- [ ] Review du project : Good practices a verifier, tels que KISS, YAGNI, DRY, etc ...
+- [x] Review du project : Good practices a verifier, tels que KISS, YAGNI, DRY, etc ... — fait un premier passage DRY : le pattern fond+overlay (`.page::before`/`.page::after`) était dupliqué à l'identique dans 7 fichiers CSS, factorisé via `composes` (`src/shared/styles/pageBackground.module.css`). Note technique : les `@keyframes` ne peuvent **pas** être partagées de la même façon (CSS Modules localise le nom utilisé dans `animation:` même sans `@keyframes` local correspondant dans le fichier — testé, ça casse l'animation en silence) ; elles restent dupliquées intentionnellement (3 occurrences identiques, `TombstoneCard`/`LandingPage`/`GravePage`).
 ## Mise en production et scaling (1 → 1 000 → 10 000 users)
 
 ### Phase 0 — Mise en production initiale

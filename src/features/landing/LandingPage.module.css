@@ -1,4 +1,5 @@
 .content {
+  composes: pageOverlay from "@/shared/styles/pageBackground.module.css";
   position: relative;
   height: 100vh;
 }
@@ -14,14 +15,6 @@
   background-repeat: no-repeat;
   background-position: center bottom;
   background-size: cover;
-}
-
-.content::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--color-overlay-dark);
-  pointer-events: none;
 }
 
 .inner {
@@ -104,14 +97,14 @@
     var(--color-bg-secondary) 70%
   );
   background-size: 200% 100%;
-  animation: proof-shimmer 1.4s ease-in-out infinite;
+  animation: shimmer 1.4s ease-in-out infinite;
 }
 
 .proof-skeleton--wide {
   width: 220px;
 }
 
-@keyframes proof-shimmer {
+@keyframes shimmer {
   0% {
     background-position: 200% 0;
   }

@@ -1,0 +1,14 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageOverlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-overlay-dark);
+  pointer-events: none;
+}
