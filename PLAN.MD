@@ -268,6 +268,9 @@ Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` 
 - [ ] Headers de sécurité (`X-Frame-Options`, etc.) — à ajouter en meta tags ou via un futur hébergeur supportant les headers custom (GitHub Pages ne permet pas de headers custom nativement)
 - [ ] Verification d'architecture et scalabilités
 - [x] Review du project : Good practices a verifier, tels que KISS, YAGNI, DRY, etc ... — fait un premier passage DRY : le pattern fond+overlay (`.page::before`/`.page::after`) était dupliqué à l'identique dans 7 fichiers CSS, factorisé via `composes` (`src/shared/styles/pageBackground.module.css`). Note technique : les `@keyframes` ne peuvent **pas** être partagées de la même façon (CSS Modules localise le nom utilisé dans `animation:` même sans `@keyframes` local correspondant dans le fichier — testé, ça casse l'animation en silence) ; elles restent dupliquées intentionnellement (3 occurrences identiques, `TombstoneCard`/`LandingPage`/`GravePage`).
+- [x] Skeletons de chargement (`TombstoneCardSkeleton`) sur `/cemetery`, `/my-graves` et `/graves/:slug`, remplace le texte "Loading..."
+- [x] Suppression d'une tombe déplacée de la grille `/my-graves` vers la page de détail `/graves/:slug` (visible seulement si `user.id === grave.author_id`), prépare l'emplacement du futur bouton "Edit"
+
 ## Mise en production et scaling (1 → 1 000 → 10 000 users)
 
 ### Phase 0 — Mise en production initiale
@@ -323,11 +326,12 @@ L'app est déployée en continu sur GitHub Pages (project page `coleim.github.io
 
 - Config : `vitest.config.ts` (environnement `jsdom`, alias `@`, exclut `e2e/**`)
 - Scripts : `npm run test:unit` / `npm run test:unit:watch`
-- Couverture actuelle (15 tests, 4 fichiers) :
+- Couverture actuelle (21 tests, 5 fichiers) :
   - `src/lib/schemas/grave.test.ts` — règles zod (`died >= born`, champs optionnels, limite `tech_stack`)
   - `src/shared/components/TagInput.test.tsx` — ajout/suppression de tags, anti-doublon, limite `max`
   - `src/shared/components/TombstoneCard.test.tsx` — rendu des props, lien conditionnel vers `/graves/:slug`
   - `src/features/auth/ProtectedRoute.test.tsx` — loading/redirection/rendu selon la session (mock de `useAuth`)
+  - `src/features/grave/GraveForm.test.tsx` — boutons "✨ Generate" (epitaph/cause)
 
 ### E2E — Playwright (interception réseau native, pas de MSW)
 
@@ -336,8 +340,8 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (12 tests, 5 fichiers) :
-  - `e2e/landing.spec.ts` — landing + navigation
+- Couverture actuelle (13 tests, 5 fichiers) :
+  - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion
   - `e2e/create-grave.spec.ts` — connexion → création d'une tombe → redirection vers `/graves/:slug`
@@ -360,6 +364,17 @@ Intégré dans `.github/workflows/deploy.yml` (job `test`), bloque le déploieme
 - **Choisir sa tombe** : actuellement, l'image de tombe (fond + premier plan) est assignée aléatoirement à la création et fixée définitivement (colonnes `tombstone_bg`/`tombstone_fg` sur `graves`). Un bouton désactivé "🔒 Choose your tombstone" est déjà présent dans `/graves/new` pour montrer que cette fonctionnalité arrivera. Prévu comme **feature payante** : permettre à l'utilisateur de choisir manuellement son image de tombe parmi la collection (ou en débloquer plus).
 - **Génération IA d'epitaph/cause** : le bouton "✨ Generate" pioche actuellement dans des listes statiques (`src/lib/constants/graveContent.ts`, ~20 phrases chacune). Prévu à terme : remplacer par un vrai appel à un modèle IA pour générer une phrase contextuelle (basée sur le nom du projet, la stack technique, etc.), sans changer l'UX du bouton.
 - **Éditer une tombe existante** (cf. `FEATURES.MD`) : actuellement une tombe créée ne peut plus être modifiée après coup (seulement supprimée). À concevoir : formulaire d'édition réutilisant `GraveForm`, policy RLS `UPDATE` déjà en place côté BDD.
+
+## Roadmap vers la prod (hors auth, mise de côté sur demande)
+
+Découpage convenu pour la suite, auth/Google OAuth/fiabilité email explicitement **mis de côté pour l'instant** (cf. Milestone 1) :
+
+- [x] **Vague A — Qualité & revue de code** : DRY du CSS fond/overlay (7 fichiers → `composes`), bug d'asset Vite détecté et corrigé au passage. Skeletons de chargement + suppression déplacée vers la page de détail (demandes complémentaires traitées dans la foulée).
+- [ ] **Vague B — SEO & partage social** : meta OG statiques dans `index.html` (landing uniquement, le dynamique par tombe nécessite du SSR/edge — limitation documentée), `robots.txt` + `sitemap.xml` généré au build (requête Supabase des tombes publiques)
+- [ ] **Vague C — a11y & responsive** : audit clavier/contraste, passage responsive mobile/tablette
+- [ ] **Vague D — Monitoring & analytics** : Sentry (erreurs front) + Plausible/Umami (analytics) — nécessite la création de comptes externes par l'utilisateur
+- [ ] **Vague E — Scaling léger** : vraie pagination sur `/cemetery` (actuellement limité à 24 lignes en dur)
+- [ ] **Vague F — Sécurité** : revue RLS, `npm audit`, checklist OWASP basique (pentest externe hors de portée d'un agent IA) ; headers de sécurité impossibles nativement sur GitHub Pages (limitation documentée, cf. Sécurité)
 
 ## Rappel de méthode
 
