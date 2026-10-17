@@ -345,3 +345,10 @@ Intégré dans `.github/workflows/deploy.yml` (job `test`), bloque le déploieme
 
 - Les Milestones sont à valider dans l'ordre ; les cases non cochées ci-dessus sont les prochaines actions à mener.
 - Toute évolution de la BDD en production doit passer par une migration SQL explicite et versionnée (envisager `supabase/migrations/` si la CLI est liée un jour), pas uniquement par le Dashboard.
+
+
+
+# Scale UP
+- Test de securité (pentests)
+- Verification d'architecture et scalabilités
+- Review du project : Good practices a verifier, tels que KISS, YAGNI, DRY, etc ...

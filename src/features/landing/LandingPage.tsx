@@ -1,3 +1,4 @@
+import logo from "@/assets/grave-logo.png";
 import { LinkButton } from "@/shared/components/LinkButton";
 import { Navbar } from "@/shared/components/Navbar";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
@@ -102,7 +103,14 @@ export function LandingPage() {
 
         <footer className={styles["footer"]}>
           <div className={styles["footer-left"]}>
-            <span className={styles["footer-logo"]}>🪦 burymyproject.dev</span>
+            <span className={styles["footer-logo"]}>
+              <img
+                src={logo}
+                alt="burymyproject.dev logo"
+                className={styles["footer-logo-img"]}
+              />
+              burymyproject.dev
+            </span>
             <span className={styles["footer-tagline"]}>
               Made by a developer who ships too little.
             </span>

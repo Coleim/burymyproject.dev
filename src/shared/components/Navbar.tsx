@@ -18,7 +18,11 @@ export function Navbar() {
   return (
     <nav className={styles.navbar}>
       <Link to="/" className={styles["navbar-brand"]}>
-        <img src={logo} alt="Sideplot logo" className={styles["navbar-logo"]} />
+        <img
+          src={logo}
+          alt="burymyproject.dev logo"
+          className={styles["navbar-logo"]}
+        />
         <span className={styles["navbar-name"]}>burymyproject.dev</span>
       </Link>
       <div></div>
