@@ -148,6 +148,32 @@
   color: var(--color-text-secondary);
 }
 
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.generate-button {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-accent-warm);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 28px;
+}
+
+.generate-button:hover {
+  border-color: var(--color-accent-warm);
+  background: rgba(245, 194, 122, 0.08);
+}
+
 .input,
 .textarea {
   min-height: 44px;

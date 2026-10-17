@@ -2,6 +2,7 @@ import { Button } from "@/shared/components/Button";
 import { TagInput } from "@/shared/components/TagInput";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { graveSchema, type GraveFormValues } from "@/lib/schemas/grave";
+import { CAUSES, EPITAPHS, pickRandom } from "@/lib/constants/graveContent";
 import { pickRandomGravePair, type GravePair } from "@/shared/lib/randomGrave";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -26,6 +27,7 @@ export function GraveForm({
     handleSubmit,
     control,
     setError,
+    setValue,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<GraveFormValues>({
@@ -98,9 +100,22 @@ export function GraveForm({
       </div>
 
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="epitaph">
-          Epitaph
-        </label>
+        <div className={styles["label-row"]}>
+          <label className={styles.label} htmlFor="epitaph">
+            Epitaph
+          </label>
+          <button
+            type="button"
+            className={styles["generate-button"]}
+            onClick={() =>
+              setValue("epitaph", pickRandom(EPITAPHS), {
+                shouldValidate: true,
+              })
+            }
+          >
+            ✨ Generate
+          </button>
+        </div>
         <input
           id="epitaph"
           type="text"
@@ -168,9 +183,20 @@ export function GraveForm({
       </div>
 
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="cause">
-          Cause of death
-        </label>
+        <div className={styles["label-row"]}>
+          <label className={styles.label} htmlFor="cause">
+            Cause of death
+          </label>
+          <button
+            type="button"
+            className={styles["generate-button"]}
+            onClick={() =>
+              setValue("cause", pickRandom(CAUSES), { shouldValidate: true })
+            }
+          >
+            ✨ Generate
+          </button>
+        </div>
         <input
           id="cause"
           type="text"
