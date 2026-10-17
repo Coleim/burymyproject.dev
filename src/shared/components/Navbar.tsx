@@ -1,9 +1,20 @@
 import logo from "@/assets/grave-logo.png";
-import { Link } from "react-router-dom";
+import { useAuth } from "@/features/auth/useAuth";
+import { supabase } from "@/lib/supabase";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "./Button";
 import { LinkButton } from "./LinkButton";
 import styles from "./Navbar.module.css";
 
 export function Navbar() {
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    navigate("/");
+  }
+
   return (
     <nav className={styles.navbar}>
       <Link to="/" className={styles["navbar-brand"]}>
@@ -12,15 +23,33 @@ export function Navbar() {
       </Link>
       <div></div>
       <div className={styles["navbar-actions"]}>
-        <LinkButton to="/login" variant="secondary">
-          Log In
-        </LinkButton>
-        <LinkButton to="/signup" variant="accent">
-          Sign Up
-        </LinkButton>
+        {!loading && session ? (
+          <>
+            <LinkButton to="/my-graves" variant="secondary">
+              My Graveyard
+            </LinkButton>
+            <LinkButton to="/cemetery" variant="secondary">
+              Global Cemetery
+            </LinkButton>
+            <Button
+              variant="accent"
+              onClick={handleLogout}
+              aria-label="Log out"
+            >
+              Log Out
+            </Button>
+          </>
+        ) : (
+          <>
+            <LinkButton to="/login" variant="secondary">
+              Log In
+            </LinkButton>
+            <LinkButton to="/signup" variant="accent">
+              Sign Up
+            </LinkButton>
+          </>
+        )}
       </div>
     </nav>
-
-    // [NAVBAR] 🪦 Sideplot [LOGO]     My Graveyard [LINK]   Stats [LINK]   Public Profile [LINK]     👤 @john [AVATAR + USERNAME]
   );
 }

@@ -1,95 +1,33 @@
 import { LinkButton } from "@/shared/components/LinkButton";
 import { Navbar } from "@/shared/components/Navbar";
+import { TombstoneCard } from "@/shared/components/TombstoneCard";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+import type { Grave } from "@/features/grave/types";
 import { Hero } from "./Hero";
 import styles from "./LandingPage.module.css";
 
-const graveBgs = import.meta.glob("@/assets/graves/grave_bg_*.png", {
-  eager: true,
-  import: "default",
-});
-const graves = import.meta.glob("@/assets/graves/grave_[0-9]*.png", {
-  eager: true,
-  import: "default",
-});
-
-const graveBgList = Object.values(graveBgs) as string[];
-const graveList = Object.values(graves) as string[];
-
-function shuffle<T>(arr: T[]): T[] {
-  // TODO : DO IT BETTER ; AI SUCKS
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-let shuffledBgs = shuffle(graveBgList);
-let shuffledFgs = shuffle(graveList);
-let bgCursor = 0;
-let fgCursor = 0;
-
-function getRandomGravePair() {
-  if (bgCursor >= shuffledBgs.length) {
-    shuffledBgs = shuffle(graveBgList);
-    bgCursor = 0;
-  }
-  if (fgCursor >= shuffledFgs.length) {
-    shuffledFgs = shuffle(graveList);
-    fgCursor = 0;
-  }
-  return { bg: shuffledBgs[bgCursor++], fg: shuffledFgs[fgCursor++] };
-}
-
-interface TombstoneProps {
-  name: string;
-  startDate: string;
-  endDate: string;
-  epitaph: string;
-  cause: string;
-  featured?: boolean;
-}
-
-function Tombstone({
-  name,
-  startDate,
-  endDate,
-  epitaph,
-  cause,
-  featured,
-}: TombstoneProps) {
-  const { bg, fg } = getRandomGravePair();
-  return (
-    <div
-      className={`${styles["tombstone"]} ${featured ? styles["tombstone--featured"] : ""}`}
-    >
-      <div className={styles["tombstone-image"]}>
-        <img src={bg} alt="" className={styles["grave-bg"]} />
-        <img
-          src={fg}
-          alt={`Grave for ${name}`}
-          className={styles["grave-fg"]}
-        />
-        <div className={styles["tombstone-overlay"]}>
-          <div className={styles["tombstone-top-row"]}>
-            <span className={styles["tombstone-dates"]}>
-              <span>{startDate}</span>
-              <span>{endDate}</span>
-            </span>{" "}
-            <span className={styles["tombstone-cause"]}>{cause}</span>
-          </div>
-          <div className={styles["tombstone-center"]}>
-            <h4 className={styles["tombstone-name"]}>{name}</h4>
-            <p className={styles["tombstone-epitaph"]}>{epitaph}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function LandingPage() {
+  const [recentGraves, setRecentGraves] = useState<Grave[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    supabase
+      .from("graves")
+      .select("*")
+      .eq("is_public", true)
+      .order("created_at", { ascending: false })
+      .limit(6)
+      .then(({ data }) => {
+        if (!cancelled) setRecentGraves(data ?? []);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className={styles.content}>
       <div className={styles.inner}>
@@ -128,55 +66,25 @@ export function LandingPage() {
             <h2 className={styles["section-title"]}>Recently Buried</h2>
           </div>
 
-          <div className={styles["tombstone-grid"]}>
-            <Tombstone
-              name="HealthTracker Pro"
-              startDate="Jan 2024"
-              endDate="Feb 2024"
-              epitaph="It tracked everything except its own survival."
-              cause="Lost Interest"
-            />
-            <Tombstone
-              name="DevFlow"
-              startDate="Jan 2024"
-              endDate="Feb 2024"
-              epitaph="The README was the entire product."
-              cause="Scope Creep"
-              featured
-            />
-            <Tombstone
-              name="CryptoWallet v3"
-              startDate="Jan 2024"
-              endDate="Feb 2024"
-              epitaph="Born in a bull run, died in a reality check."
-              cause="Market Timing"
-            />
-            <Tombstone
-              name="CryptoWallet v3"
-              startDate="Jan 2024"
-              endDate="Feb 2024"
-              epitaph="Born in a bull run, died in a reality check."
-              cause="Market Timing"
-            />
-            <Tombstone
-              name="CryptoWallet v3"
-              startDate="Jan 2024"
-              endDate="Feb 2024"
-              epitaph="Born in a bull run, died in a reality check."
-              cause="Market Timing"
-            />
-
-            <Tombstone
-              name="CryptoWallet v3"
-              startDate="Jan 2024"
-              endDate="Feb 2024"
-              epitaph="Born in a bull run, died in a reality check."
-              cause="Market Timing"
-            />
-          </div>
+          {recentGraves && recentGraves.length > 0 ? (
+            <div className={styles["tombstone-grid"]}>
+              {recentGraves.map((grave, i) => (
+                <TombstoneCard
+                  key={grave.id}
+                  name={grave.name}
+                  startDate={grave.born}
+                  endDate={grave.died}
+                  epitaph={grave.epitaph}
+                  cause={grave.cause}
+                  slug={grave.public_slug}
+                  featured={i === 1}
+                />
+              ))}
+            </div>
+          ) : null}
 
           <div className={styles["preview-cta"]}>
-            <LinkButton to="/new-grave" variant="secondary">
+            <LinkButton to="/cemetery" variant="secondary">
               See the full graveyard →
             </LinkButton>
           </div>
@@ -187,7 +95,7 @@ export function LandingPage() {
           <p className={styles["cta-subtitle"]}>
             Your side projects deserve a dignified end.
           </p>
-          <LinkButton to="/new-grave" size="lg">
+          <LinkButton to="/graves/new" size="lg">
             🪦 Dig Your First Grave{" "}
           </LinkButton>
         </section>
