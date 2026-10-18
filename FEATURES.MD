@@ -1,1 +1,6 @@
+- Cacher google auth pour le moment
+- Faire auth github et linkedin
 - Pouvoir Edit une de nos tombes ? 
+- Verifier un grand nombre de tombes cree -> peut etre afficher infinite scroll ou quelque chose
+- rajouter une feature de recherche de tombe 
+- rajouter un lien (github ou autre) pour le projet mort
