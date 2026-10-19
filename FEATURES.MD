@@ -4,3 +4,6 @@
 - Verifier un grand nombre de tombes cree -> peut etre afficher infinite scroll ou quelque chose
 - rajouter une feature de recherche de tombe 
 - rajouter un lien (github ou autre) pour le projet mort
+- Mobile responsive: 
+  - mobile menu to be done
+  - quand on cree une tombe, sur mobile, le bouton “creer” arrive avant la preview. Il faudrait que ca arrive apres.
