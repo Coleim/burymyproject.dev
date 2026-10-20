@@ -26,7 +26,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      testIgnore: /(csp|oauth-only|performance)\.spec\.ts/,
+      testIgnore: /(csp|oauth-only|performance|auth-lock)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], baseURL: devURL },
     },
     {
@@ -34,6 +34,13 @@ export default defineConfig({
       name: "production-build",
       testMatch: /(csp|oauth-only|performance)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], baseURL: previewURL },
+    },
+    {
+      // Firefox rejects the background token refresh with an uncaught error
+      // when it uses the default cross-tab lock.
+      name: "firefox",
+      testMatch: /auth-lock\.spec\.ts/,
+      use: { ...devices["Desktop Firefox"], baseURL: previewURL },
     },
   ],
   webServer: [
