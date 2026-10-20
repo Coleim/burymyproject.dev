@@ -73,13 +73,14 @@ export function PrivacyPage() {
               <h2 className={styles["section-title"]}>Third parties</h2>
               <p>
                 We rely on a few third-party services to run this app:{" "}
-                <strong>Supabase</strong> (authentication and database),{" "}
+                <strong>Supabase</strong> (authentication and database), and{" "}
                 <strong>Google</strong> or <strong>GitHub</strong> if you
-                choose to sign in with them (OAuth sign-in), and{" "}
-                <strong>Google Fonts</strong>, which serves the site's fonts
-                and therefore receives your IP address when a page loads.
-                None of them is used for advertising or analytics. We
-                currently don't use any analytics or tracking tools.
+                choose to sign in with them (OAuth sign-in). The site's fonts
+                and scripts are served from the site itself, so visiting it
+                doesn't send your IP address to any font or tracking
+                provider. None of these services is used for advertising or
+                analytics, and we currently don't use any analytics or
+                tracking tools.
               </p>
             </div>
 

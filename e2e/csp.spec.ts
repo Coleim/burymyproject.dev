@@ -24,6 +24,10 @@ test.describe("Content-Security-Policy (production build)", () => {
     expect(directive("object-src")).toBe("object-src 'none'");
     expect(directive("base-uri")).toBe("base-uri 'self'");
     expect(directive("default-src")).toBe("default-src 'self'");
+    // Everything is self-hosted: no third-party style or font origin is trusted.
+    expect(directive("style-src")).toBe("style-src 'self'");
+    expect(directive("font-src")).toBe("font-src 'self'");
+    expect(policy).not.toMatch(/googleapis|gstatic/);
   });
 
   test("no page triggers a CSP violation", async ({ page }) => {

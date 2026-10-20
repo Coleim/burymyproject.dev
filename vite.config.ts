@@ -4,7 +4,8 @@ import path from "path";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 
 // GitHub Pages cannot send custom HTTP headers, so the Content-Security-Policy
-// is delivered as a <meta> tag. Production builds only: the dev server injects
+// is delivered as a <meta> tag. Everything (scripts, styles, fonts, images) is
+// self-hosted, so the only external origin allowed is Supabase. Production builds only: the dev server injects
 // inline scripts (React Fast Refresh) that a strict policy would block.
 function cspMetaPlugin(): Plugin {
   let supabaseOrigin = "";
@@ -37,8 +38,8 @@ function cspMetaPlugin(): Plugin {
       const policy = [
         "default-src 'self'",
         `script-src 'self' ${inlineScriptHashes.join(" ")}`.trim(),
-        "style-src 'self' https://fonts.googleapis.com",
-        "font-src https://fonts.gstatic.com",
+        "style-src 'self'",
+        "font-src 'self'",
         "img-src 'self' data:",
         `connect-src ${connectSrc.join(" ")}`,
         "object-src 'none'",
