@@ -51,7 +51,7 @@ create table public.graves (
   tech_stack   text[] not null default '{}',
   project_url  text check (project_url is null or (char_length(project_url) <= 500 and project_url ~* '^https?://[^\s]+$')),  -- migration supabase/migrations/20261020120000_add_project_url.sql
   public_slug  text unique not null default translate(encode(gen_random_bytes(6), 'base64'), '+/=', '-_'),
-  is_public    boolean not null default true,  -- toujours vrai (check graves_always_public) ; supprimée par supabase/migrations/pending/20261020220000_drop_is_public.sql après déploiement
+  is_public    boolean not null default true,  -- SUPPRIMÉE le 20/10/2026 (20261020220000_drop_is_public.sql) ; les tombes sont toutes publiques
   tombstone_bg text not null default 'grave_bg_01.webp',  -- assigned once at creation, fixed forever (not user-editable yet)
   tombstone_fg text not null default 'grave_01.webp',
   created_at   timestamptz not null default now(),
@@ -127,7 +127,7 @@ create policy "author can delete own graves"
 
 ### Tombes publiques uniquement et Founding Ghosts (20/10/2026)
 
-**Plus de tombes privées.** Une tombe privée devenue publique rendait ambigu « premier » (à la création ou à la publication ?), et elle ajoutait un 2e type d'invisibilité à côté du masquage de modération. Décision : toutes les tombes sont publiques ; le formulaire n'a plus de case de visibilité. Migration en **expand / contract** pour ne pas casser le site déployé : `20261020210000_public_graves_and_founding_ghosts.sql` (appliquée) interdit les tombes privées par `check (is_public)` et fait dépendre la policy de `hidden` seulement, mais **garde la colonne `is_public`** (toujours vraie) tant que l'ancien front la lit ; `supabase/migrations/pending/20261020220000_drop_is_public.sql` la supprime et ne s'applique **qu'après** déploiement du front sans `is_public`. La migration refuse de s'exécuter s'il existe encore des tombes privées. (L'« unlisted » — lien secret hors cimetière — reste une option future.)
+**Plus de tombes privées.** Une tombe privée devenue publique rendait ambigu « premier » (à la création ou à la publication ?), et elle ajoutait un 2e type d'invisibilité à côté du masquage de modération. Décision : toutes les tombes sont publiques ; le formulaire n'a plus de case de visibilité. Migration en **expand / contract** pour ne pas casser le site déployé : `20261020210000_public_graves_and_founding_ghosts.sql` (appliquée) interdit les tombes privées par `check (is_public)` et fait dépendre la policy de `hidden` seulement, mais **garde la colonne `is_public`** (toujours vraie) tant que l'ancien front la lit ; `20261020220000_drop_is_public.sql` la supprime ; elle n'a été appliquée **qu'après** déploiement du front sans `is_public` (bundle en ligne vérifié : aucune occurrence), le 20/10/2026 — la colonne n'existe plus. La migration refuse de s'exécuter s'il existe encore des tombes privées. (L'« unlisted » — lien secret hors cimetière — reste une option future.)
 
 **Founding Ghosts.** Les 10 premières personnes à enterrer une tombe reçoivent chacune une **première tombe dorée** numérotée 1 à 10 (`graves.founding_rank`).
 - Règles : par ordre de création ; **un emplacement par personne** (seule sa première tombe peut être dorée) ; **permanent** : supprimer la tombe ou le compte ne libère jamais l'emplacement (« tant pis »). Le registre `founding_ghosts` (rang, `user_id`/`grave_id` annulés à la suppression) n'est accessible à aucun rôle API.
