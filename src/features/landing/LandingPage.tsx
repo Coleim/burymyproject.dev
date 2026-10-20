@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import type { Grave } from "@/features/grave/types";
 import { Link } from "react-router-dom";
+import { FoundingTeaser } from "./FoundingTeaser";
 import { Hero } from "./Hero";
 import styles from "./LandingPage.module.css";
 import { usePageTitle } from "@/shared/lib/usePageTitle";
@@ -21,6 +22,7 @@ export function LandingPage() {
   usePageTitle();
   const [recentGraves, setRecentGraves] = useState<Grave[] | null>(null);
   const [stats, setStats] = useState<HomeStats | null>(null);
+  const [foundingClaimed, setFoundingClaimed] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +49,11 @@ export function LandingPage() {
         });
       });
 
+    supabase.rpc("founding_spots_claimed").then(({ data, error }) => {
+      if (cancelled || error || typeof data !== "number") return;
+      setFoundingClaimed(data);
+    });
+
     return () => {
       cancelled = true;
     };
@@ -57,7 +64,9 @@ export function LandingPage() {
       <div className={styles.inner}>
         <Navbar />
         <Main>
-          <Hero />
+          <Hero>
+            <FoundingTeaser claimed={foundingClaimed} />
+          </Hero>
           <div className={styles["social-proof"]}>
             {stats ? (
               <>

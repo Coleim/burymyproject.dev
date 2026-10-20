@@ -145,7 +145,7 @@ Causes et remèdes : (1) logo PNG de **377 Ko** affiché à 28 px → WebP de 4 
 - Attribution par un trigger `AFTER INSERT` (`claim_founding_ghost`, `security definer`, verrou consultatif pour sérialiser) ; `founding_rank` est forcé à `null` à l'insertion par un client et figé à la mise à jour (`protect_grave_columns`). **Seules les personnes réelles connectées via l'API réclament un rang** : pas les insertions d'administration (seed, restaurations) ni les comptes de test à domaine réservé (`example.com/org/net`, `.invalid`, `.test`, `.example`) — sinon chaque exécution de la CI aurait consommé des emplacements.
 - Vérifié par simulation de rôles (transaction annulée) : attribution 1…10 dans l'ordre, une seule par personne, emplacement conservé après suppression de la tombe **et** du compte, 11e personne sans rang, comptes de test et admin sans rang, client incapable de forger ou modifier un rang, registre illisible/inscriptible par `anon`/`authenticated`.
 - Affichage (`TombstoneCard`, `foundingRank`) : badge texte « 👻 Founding Ghost №n » (jamais la couleur seule), cadre et halo dorés, artwork teinté, reflet lent **sous** la couche de texte (jamais sur les dates/nom/badge), coupé en mouvement réduit ; note explicative sur la page de la tombe. Le nom est une constante (`src/lib/founding.ts`).
-- **Idée non faite** : un compteur « N places restantes sur 10 » sur la landing (nécessite une fonction `security definer` lisant le registre).
+- **Compteur sur la landing** : pastille dorée sous le bouton principal — « Be the first of 10 Founding Ghosts », « N of 10 Founding Ghost spots left », « Last Founding Ghost spot! », puis « All 10 Founding Ghosts have been claimed » (sans appel à l'action). Fonction `founding_spots_claimed()` (`security definer`, migration `20261020230000_founding_spots_counter.sql`) qui ne renvoie qu'un nombre : elle lit le **registre** (pas les tombes : un emplacement reste pris quand la tombe ou le compte est supprimé) alors que le registre lui-même reste fermé à `anon`/`authenticated`. Si le chargement échoue, rien n'est affiché. L'emplacement est **réservé** pour éviter tout décalage de mise en page (testé avec une réponse retardée ; mutation-vérifié). Contraste mesuré sur les pixels réels : 10,1:1 minimum (4 messages × 4 largeurs).
 
 **Correction d'une affirmation précédente (contraste).** L'audit de contraste du 20/10 mesurait la couleur de chaque texte mais **pas l'opacité de l'élément** : il avait manqué les textes volontairement estompés des cartes (dates à `opacity: .55` → 2,7:1 ; épitaphe à `.6` → 3,4:1 sur certains artworks). Corrigé : opacités relevées (≥ .9), pastille de cause opaque, **voile sombre** (dégradé haut + halo central) derrière le texte de la carte. Re-mesuré avec l'opacité prise en compte, sur les pixels réels, **10 fonds × 13 avant-plans, cartes ordinaires et dorées, à 1280/768/375/320 px** (pages courtes de 3 cartes : sur une page très haute la sonde donnait des faux négatifs) : 0 échec. Test e2e de garde (`founding.spec.ts`) : opacités ≥ .9, voile présent, pastille ≥ .85.
 
@@ -458,7 +458,7 @@ L'app est déployée en continu sur GitHub Pages (project page `coleim.github.io
 
 - Config : `vitest.config.ts` (environnement `jsdom`, alias `@`, exclut `e2e/**`)
 - Scripts : `npm run test:unit` / `npm run test:unit:watch`
-- Couverture actuelle (102 tests, 12 fichiers) :
+- Couverture actuelle (109 tests, 13 fichiers) :
   - `scripts/lib/export-crypto.test.mjs`, `scripts/lib/export-snapshot.test.mjs` — chiffrement de l'export (aller-retour, mauvaise phrase, fichier altéré, aucun clair dans le fichier) et pagination > 1000 lignes
   - `src/lib/schemas/grave.test.ts` — règles zod (`died >= born`, champs optionnels, limite `tech_stack`)
   - `src/shared/components/TagInput.test.tsx` — ajout/suppression de tags, anti-doublon, limite `max`
@@ -473,7 +473,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (112 tests, 21 fichiers) :
+- Couverture actuelle (119 tests, 21 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion, `redirectTo` externe ignoré (open redirect)

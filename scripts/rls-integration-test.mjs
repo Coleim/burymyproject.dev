@@ -305,6 +305,16 @@ try {
       statsError?.message ?? `stats=${stats?.total_graves} visible=${visibleCount}`,
     );
 
+    // --- founding_spots_claimed(): a count anyone can read, never the ledger ---
+    for (const [who, client] of [["Anonymous visitor", anonClient], ["Signed-in user", clientA]]) {
+      const { data: claimedCount, error: claimedError } = await client.rpc("founding_spots_claimed");
+      check(
+        `${who} can read how many Founding Ghost spots are taken (0-10)`,
+        !claimedError && Number.isInteger(claimedCount) && claimedCount >= 0 && claimedCount <= 10,
+        claimedError?.message ?? `got ${claimedCount}`,
+      );
+    }
+
     // --- Moderation: `hidden` is admin-only and honoured by the public policy ---
     await admin.from("graves").update({ hidden: true }).eq("id", publicGrave.id);
 

@@ -62,6 +62,10 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      founding_spots_claimed: {
+        Args: Record<never, never>;
+        Returns: number;
+      };
       home_stats: {
         Args: Record<never, never>;
         Returns: {

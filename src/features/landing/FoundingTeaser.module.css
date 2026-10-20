@@ -1,0 +1,61 @@
+.slot {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 3.1rem;
+  margin-top: 1.1rem;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teaser {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.6rem;
+  margin: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid #e8c36a;
+  border-radius: 1.4rem;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(246, 221, 143, 0.16), rgba(217, 164, 65, 0.08)), rgba(13, 16, 21, 0.72);
+  box-shadow: 0 0 18px rgba(255, 205, 96, 0.22);
+  color: #f6dd8f;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+  animation: appear 500ms ease-out both;
+}
+
+a.teaser:hover {
+  box-shadow: 0 0 26px rgba(255, 205, 96, 0.4);
+  color: #fff1bf;
+}
+
+a.teaser:focus-visible {
+  outline: 2px solid var(--color-accent-warm);
+  outline-offset: 3px;
+}
+
+.cta {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: #fff1bf;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { makeGrave, mockPaginatedGraves } from "./mocks/supabase";
+import { makeGrave, mockFoundingClaimed, mockGravesList, mockPaginatedGraves } from "./mocks/supabase";
 
 const founding = makeGrave({ id: "1", public_slug: "f-1", name: "First Ghost", founding_rank: 1 });
 const tenth = makeGrave({ id: "2", public_slug: "f-10", name: "Tenth Ghost", founding_rank: 10, tombstone_bg: "grave_bg_05.webp", tombstone_fg: "grave_08.webp" });
@@ -117,4 +117,69 @@ test.describe("Founding Ghost", () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
     });
   }
+});
+
+test.describe("Founding Ghost teaser on the home page", () => {
+  const teaser = (page: import("@playwright/test").Page) => page.getByTestId("founding-teaser");
+
+  test.beforeEach(async ({ page }) => {
+    await mockGravesList(page, []); // stats and graves; each test sets its own count below
+  });
+
+  for (const [claimed, text] of [
+    [0, "Be the first of 10 Founding Ghosts"],
+    [3, "7 of 10 Founding Ghost spots left"],
+    [9, "Last Founding Ghost spot!"],
+  ] as const) {
+    test(`${claimed} claimed says "${text}" and invites to dig a grave`, async ({ page }) => {
+      await mockFoundingClaimed(page, claimed);
+      await page.goto("");
+
+      await expect(teaser(page)).toContainText(text);
+      await expect(teaser(page)).toContainText("Claim yours");
+      await expect(teaser(page)).toHaveAttribute("href", /\/graves\/new$/);
+    });
+  }
+
+  test("once all ten are claimed it says so and is no longer a call to action", async ({ page }) => {
+    await mockFoundingClaimed(page, 10);
+    await page.goto("");
+
+    await expect(teaser(page)).toContainText("All 10 Founding Ghosts have been claimed");
+    await expect(teaser(page)).not.toContainText("Claim yours");
+    expect(await teaser(page).evaluate((el) => el.tagName)).toBe("P");
+  });
+
+  test("if the count can't be loaded, nothing is shown and the page still works", async ({ page }) => {
+    await mockFoundingClaimed(page, "error");
+    await page.goto("");
+
+    await expect(page.getByRole("heading", { level: 1, name: /bury your dead projects/i })).toBeVisible();
+    await expect(teaser(page)).toHaveCount(0);
+  });
+
+  test("a late answer causes no layout shift: the space is reserved", async ({ page }) => {
+    await mockFoundingClaimed(page, 4, { delayMs: 900 });
+    await page.goto("");
+
+    const stripY = async () => (await page.getByTestId("stat-total-graves").boundingBox())!.y;
+    await expect(page.getByTestId("stat-total-graves")).toBeVisible();
+    const before = await stripY();
+    expect(await teaser(page).count()).toBe(0); // not there yet
+
+    await expect(teaser(page)).toBeVisible();
+    const after = await stripY();
+    expect(Math.abs(after - before)).toBeLessThan(1);
+  });
+
+  test("it fits on a 320px screen", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await mockFoundingClaimed(page, 0);
+    await page.goto("");
+
+    const box = (await teaser(page).boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(320);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  });
 });

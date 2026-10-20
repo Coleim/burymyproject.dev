@@ -155,8 +155,24 @@ export function mockHomeStats(
   });
 }
 
+export function mockFoundingClaimed(
+  page: Page,
+  claimed: number | "error",
+  options: { delayMs?: number } = {},
+) {
+  return page.route("**/rest/v1/rpc/founding_spots_claimed*", async (route) => {
+    if (options.delayMs) await new Promise((r) => setTimeout(r, options.delayMs));
+    if (claimed === "error") {
+      await route.fulfill({ status: 500, contentType: "application/json", body: '{"message":"boom"}' });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(claimed) });
+  });
+}
+
 export async function mockGravesList(page: Page, graves: MockGrave[]) {
   await mockHomeStats(page, homeStatsFor(graves));
+  await mockFoundingClaimed(page, graves.filter((g) => g.founding_rank).length);
   return page.route("**/rest/v1/graves*", async (route) => {
     if (route.request().method() !== "GET") {
       await route.fallback();
@@ -220,6 +236,7 @@ export async function mockPaginatedGraves(
 ) {
   const failures = new Set(options.failOffsets ?? []);
   await mockHomeStats(page, homeStatsFor(all));
+  await mockFoundingClaimed(page, all.filter((g) => g.founding_rank).length);
   return page.route("**/rest/v1/graves*", async (route) => {
     if (route.request().method() !== "GET") {
       await route.fallback();

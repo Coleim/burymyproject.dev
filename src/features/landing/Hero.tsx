@@ -1,7 +1,8 @@
 import { LinkButton } from "@/shared/components/LinkButton";
+import type { ReactNode } from "react";
 import styles from "./Hero.module.css";
 
-export function Hero() {
+export function Hero({ children }: { children?: ReactNode }) {
   return (
     <div className={styles.hero}>
       <h2 className={styles["hero-subtitle"]}>
@@ -18,6 +19,7 @@ export function Hero() {
       <span className={styles["text-small"]}>
         No credit card required. Just bring your corpses.
       </span>
+      {children}
     </div>
   );
 }
