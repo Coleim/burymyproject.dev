@@ -66,6 +66,7 @@ npm run dev
 | `npm run test:unit` | Run unit tests (Vitest) |
 | `npm run test:unit:watch` | Run unit tests in watch mode |
 | `npm run test:e2e` | Run end-to-end tests (Playwright). Includes accessibility (axe), keyboard, responsive and CSP checks; the CSP project builds and serves the production bundle |
+| `npm run test:e2e:cross-browser` | Re-run the cemetery navigation tests on Chromium, Firefox and WebKit (Safari's engine). Needs `npx playwright install firefox webkit` |
 | `npm run test:rls` | Run RLS integration tests against the real Supabase project (requires `SUPABASE_SERVICE_ROLE_KEY`) |
 | `npm run seed -- [count]` | Insert fake graves (default 4000) under a dedicated `seed-bot` user, to test pagination, search and performance. Requires `SUPABASE_ACCESS_TOKEN` and Node ≥ 22.18 |
 | `npm run seed:remove` | Remove everything created by `seed` (deleting the seed user cascades to its graves) |

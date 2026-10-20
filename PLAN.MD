@@ -138,6 +138,35 @@ Migration versionnée `supabase/migrations/20261020150000_harden_graves.sql`, ap
 - Cas ajoutés à `scripts/rls-integration-test.mjs` (exécuté en CI avec la clé service) : date forcée, champs figés, limites de taille, URL `javascript:` refusée, insertion anonyme refusée.
 - **Risques acceptés / non traités** : protection contre les mots de passe compromis (HIBP, plan Pro) ; captcha (nécessite un compte) ; `author_id` (UUID) exposé en lecture publique car utilisé pour les stats de la landing ; `localhost` conservé dans `uri_allow_list` pour le dev ; pas de pentest externe.
 
+### Plan « 100 000 tombes » (mesures du 20/10/2026)
+
+**Mesures réelles** (20 000 tombes seedées, 19 000 publiques, rôle `anon`, RLS incluse ; table + index = 8 Mo, soit ~400 octets/tombe → ~40 Mo pour 100 000, base entière 20 Mo) :
+
+| Requête | Temps BDD | Remarque |
+| --- | --- | --- |
+| Page 1 | 0,1 ms | index `created_at` |
+| Page 100 (offset 2376) | 1,3 ms | |
+| Dernière page (offset 18 960) | 9 ms | croît avec l'offset |
+| `count(*)` exact | 6 ms | par clic « Load more » avant correction |
+| Recherche `ilike '%x%'` | 27-29 ms | seq scan, linéaire |
+| `home_stats()` | 17 ms | par visite de la landing |
+
+Via l'API, chaque appel coûte ~0,3 s, presque uniquement de la latence réseau (région `eu-west-1`) : à 20k, la base n'est pas ce qui ralentit. **Projection linéaire à 100k** : recherche ~150 ms, count ~30 ms, `home_stats()` ~85 ms par visite, offset profond ~45 ms.
+
+**Fait** (indépendant de la taille) : images de cartes `loading="lazy"` + `decoding="async"` ; `content-visibility: auto` sur les cartes des grilles ; `count` demandé seulement sur la 1re page d'une recherche (une page courte marque la fin de liste) ; recherche et nombre de pages chargées dans l'URL (`?q=`, `?pages=` plafonné à 10, restauré en **une seule requête**) ; position de scroll sauvegardée par terme et restaurée après « Retour » (nécessaire sur Firefox/WebKit) ; `ScrollToTop` global sur les navigations hors « Retour ». « Load more » est conservé (choix UX) : pas de scroll infini.
+
+**À faire vers ~10 000 tombes**
+- Pagination par curseur (`created_at`, `id`) + index partiel `(created_at desc, id desc) where is_public` : coût constant quelle que soit la profondeur, pages stables quand des tombes arrivent.
+- Index `pg_trgm` (GIN) sur le nom ; recherche par tech stack = colonne `search_text` (migration, fonction immuable).
+- `home_stats()` : précalculer dans une petite table rafraîchie par `pg_cron` toutes les quelques minutes (lecture O(1)) au lieu d'un scan complet à chaque visite.
+- Sitemap : au-delà de 50 000 URLs le script tronque silencieusement → sitemap index + plusieurs fichiers.
+
+**À faire vers ~50 000-100 000 tombes**
+- Pagination numérotée ou virtualisation de la liste (le DOM grossit à chaque « Load more »).
+- Découverte : filtres par cause / tech stack, bouton « tombe au hasard » (personne ne parcourt 100k tombes dans l'ordre).
+- Modération du contenu public (signalement, masquage), captcha à l'inscription ; le plafond de 200 tombes/utilisateur limite déjà l'abus.
+- Couche de cache devant le site (Cloudflare), vérifier les quotas du plan Free (taille BDD, egress, MAU) au moment venu.
+
 ### Revue d'architecture et de scalabilité du 20/10/2026
 
 Méthode : vérifications sur la vraie base (config PostgREST, index, `EXPLAIN ANALYZE`, seed de 2500-4000 tombes), mesures réseau en navigateur sur le build de prod, lecture du code.
@@ -150,7 +179,7 @@ Méthode : vérifications sur la vraie base (config PostgREST, index, `EXPLAIN A
 - Fichier doublon de 5 Mo supprimé (`src/assets/bg-home-4k - Copie.jpg`, non référencé ; il reste dans l'historique git), README mis à jour.
 
 **Constaté, volontairement non traité (à reconsidérer à l'échelle)**
-- Pagination du cemetery par `offset` avec `count: exact` à chaque « Load more » : 2-4 ms à 4000 lignes. Vers ~100k lignes : pagination par curseur (`created_at`), `count` seulement sur la 1re page, index partiel `(created_at desc) where is_public`.
+- Pagination du cemetery par `offset` : 9 ms à la dernière page de 20 000 tombes ; `count` désormais limité à la 1re page. Vers ~100k lignes : pagination par curseur + index partiel (cf. « Plan 100 000 tombes »).
 - Recherche `ilike '%x%'` : seq scan linéaire (~7 ms à 4000). Vers ~100k : `pg_trgm`. Recherche par tech stack = migration `search_text`.
 - Pas de cache client (react-query) : chaque navigation re-télécharge. Acceptable tant qu'aucun problème n'est mesuré (YAGNI).
 - `GravePage` et `EditGravePage` répètent la même logique « charger par slug » (statuts loading/found/not-found/error) : factoriser en hook si un 3e consommateur apparaît.
@@ -375,7 +404,7 @@ L'app est déployée en continu sur GitHub Pages (project page `coleim.github.io
 
 - Config : `vitest.config.ts` (environnement `jsdom`, alias `@`, exclut `e2e/**`)
 - Scripts : `npm run test:unit` / `npm run test:unit:watch`
-- Couverture actuelle (63 tests, 9 fichiers) :
+- Couverture actuelle (76 tests, 10 fichiers) :
   - `src/lib/schemas/grave.test.ts` — règles zod (`died >= born`, champs optionnels, limite `tech_stack`)
   - `src/shared/components/TagInput.test.tsx` — ajout/suppression de tags, anti-doublon, limite `max`
   - `src/shared/components/TombstoneCard.test.tsx` — rendu des props, lien conditionnel vers `/graves/:slug`
@@ -389,13 +418,15 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (61 tests, 13 fichiers) :
+- Couverture actuelle (79 tests, 15 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion, `redirectTo` externe ignoré (open redirect)
   - `e2e/create-grave.spec.ts` — connexion → création d'une tombe → redirection vers `/graves/:slug`
   - `e2e/404.spec.ts` — route inconnue et slug de tombe inexistant
   - `e2e/cemetery.spec.ts` — pagination « Load more » (mock de 4000 tombes), recherche, états vide/erreur
+  - `e2e/cemetery-navigation.spec.ts` — `count` demandé uniquement sur la 1re page, images lazy, `content-visibility`, état dans l'URL (`?q=`, `?pages=` plafonné), retour arrière (recherche + pages + position de scroll, avec réseau lent), visite neuve = haut de page
+  - `e2e/undertaker.spec.ts` — illustration du croque-mort : décorative, chargée, sans chevauchement (nav/titre/formulaire/aperçu) à 320/375/768/1280 px, fichiers WebP optimisés, absente de la page d'édition
   - `e2e/edit-grave.spec.ts` — édition par l'auteur, not-found si pas propriétaire, redirection si déconnecté
   - `e2e/seo.spec.ts` — meta Open Graph/description/canonical, image de partage servie, titres de page
   - `e2e/a11y.spec.ts` (axe WCAG + best-practice, 10 pages × desktop/mobile), `e2e/keyboard.spec.ts` (skip link, focus, menu, reduced motion), `e2e/responsive.spec.ts` (pas de scroll horizontal 320→1440 px)
@@ -416,6 +447,12 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - `npm run seed:remove` (`scripts/unseed-graves.mjs`) supprime ce seul utilisateur ; `graves.author_id ... on delete cascade` supprime toutes les tombes seedées.
 - Passe par l'API Management (HTTPS) : env `SUPABASE_ACCESS_TOKEN` + `VITE_SUPABASE_URL`. Nécessite Node ≥ 22.18 (le script importe les constantes TypeScript).
 - Résultats du 20/10/2026 (4000 tombes, rôle `anon`, RLS incluse, `EXPLAIN ANALYZE`) : page 1 ≈ 4 ms, page 150 (offset 3576) ≈ 2 ms, `count(*)` ≈ 1,3 ms, recherche `ilike '%x%'` ≈ 6-7 ms (seq scan, linéaire). Parcours UI réel (Load more ×3, recherche, no-results) sans erreur. Si la table atteint ~100k lignes : index `pg_trgm` sur `name` (ou `search_text`) et pagination par curseur (`created_at`) à la place de `offset`.
+
+### Cross-navigateurs (opt-in)
+
+`npm run test:e2e:cross-browser` (`playwright.cross-browser.config.ts`, nécessite `npx playwright install firefox webkit`) rejoue `cemetery-navigation.spec.ts` sur Chromium, Firefox et WebKit (moteur de Safari). Pourquoi : Chromium restaure seul la position de scroll après « Retour », **pas Firefox ni WebKit** pour du contenu chargé après coup. Vérifié par test de mutation : avec la restauration maison désactivée, Firefox et WebKit retombent à `scrollY = 0`. Non branché en CI (non testé sur Linux, il bloquerait le déploiement).
+
+Le projet Playwright `production-build` (CSP) construit avec `tsc -b && vite build` **sans** l'étape sitemap (elle paginerait la vraie base à chaque exécution : ~10 s avec 19 000 tombes).
 
 ### CI
 
