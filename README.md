@@ -84,7 +84,7 @@ SQL changes live in [`supabase/migrations/`](./supabase/migrations) and are vers
 - GitHub Pages can't send custom HTTP headers, so the Content-Security-Policy is a `<meta>` tag injected into production builds by `vite.config.ts`. zod runs in `jitless` mode (no `eval`); always import it from `@/lib/zod` (enforced by ESLint).
 - Never put `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_ACCESS_TOKEN` in the client or in a committed file.
 - The repository is public, so workflow artifacts are too: exports are always encrypted.
-- Everything the site loads is self-hosted (fonts included), so visitors' browsers contact no third party except Supabase and the sign-in provider they choose.
+- Everything the site loads is self-hosted (fonts included: Cinzel, Inter), so visitors' browsers contact no third party except Supabase and the sign-in provider they choose.
 
 ## Deployment
 

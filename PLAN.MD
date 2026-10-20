@@ -130,7 +130,7 @@ create policy "author can delete own graves"
 - **Signalement** : lien « Report this grave » (mailto prérempli : sujet avec nom + slug, corps avec l'URL) pour tout visiteur sauf l'auteur ; adresse centralisée dans `src/lib/contact.ts`.
 - **Modération** : colonne `graves.hidden` (migration `20261020190000_moderation_hidden.sql`). Contrairement à `is_public`, l'auteur ne peut ni la modifier ni l'insérer à `true` (trigger `protect_grave_columns`) ; la policy publique l'honore, `home_stats()` l'exclut, ainsi que les listes (`hidden=eq.false`) et le sitemap ; l'auteur voit sa tombe avec un avis « hidden by a moderator ». Outil : `npm run moderate -- hide|unhide|show <slug ou URL>` (API Management ; entrée validée ; testé de bout en bout). Procédure : recevoir le mail → `npm run moderate -- show <slug>` → `hide` → répondre. Pour suspendre un compte : le supprimer dans le dashboard (cascade sur ses tombes) après export.
 - **Polices auto-hébergées** : Cinzel (variable, latin + latin-ext, 40 Ko, licence OFL) dans `src/assets/fonts/`. Les liens Google Fonts sont supprimés (Inter et Roboto étaient demandées mais jamais rendues) : plus d'IP de visiteur envoyée à Google, CSP `style-src 'self'` / `font-src 'self'`. Captures avant/après identiques au pixel sur 4 pages.
-- **Constat** : la plupart du texte est rendu en **Times** (police par défaut du navigateur), pas en Roboto/Inter. `--font-body`, `--font-mono` et `--font-display` sont utilisées par ~45 règles CSS mais **jamais définies** (seul `--font-heading` l'est) ; `html, body { font-family: "Roboto" }` ne s'applique donc pas comme prévu. Rien n'a été changé (ce serait un changement de design) : à décider.
+- **Typographie corrigée** : la plupart du texte était rendu en **Times** (police par défaut du navigateur). Deux causes : (1) `--font-body`, `--font-mono` et `--font-display` étaient utilisées par ~55 règles CSS mais **jamais définies** ; (2) `reset.css` (`font: inherit` sur `html, body`) était importé **après** `index.css` et écrasait la police du corps. Désormais : reset d'abord (`main.tsx`), variables définies dans `index.css` — `--font-display` = Cinzel, `--font-body` = Inter (variable 300-700, auto-hébergée : latin, latin-ext, italique latin ; ~48 Ko pour le latin, le reste seulement si le texte l'exige), `--font-mono` = pile monospace système (0 Ko). Corps à `font-weight: 400` (il était à 500, invisible en Times). Contraste re-mesuré sur les pixels réels après le changement (235 éléments à 1280/768 px, 211 à 375/320 px) : 0 échec.
 
 ### Sauvegarde (le plan Free n'en fait pas)
 
@@ -447,7 +447,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (97 tests, 18 fichiers) :
+- Couverture actuelle (99 tests, 19 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion, `redirectTo` externe ignoré (open redirect)
@@ -456,6 +456,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
   - `e2e/cemetery.spec.ts` — pagination « Load more » (mock de 4000 tombes), recherche, états vide/erreur
   - `e2e/cemetery-navigation.spec.ts` — `count` demandé uniquement sur la 1re page, images lazy, `content-visibility`, état dans l'URL (`?q=`, `?pages=` plafonné), retour arrière (recherche + pages + position de scroll, avec réseau lent), visite neuve = haut de page
   - `e2e/legal-and-moderation.spec.ts` — page `/terms` et ses liens, `rel="nofollow ugc"`, lien « Report this grave » prérempli (absent pour l'auteur), avis « hidden by a moderator », listes publiques filtrées sur `hidden=eq.false`
+  - `e2e/typography.spec.ts` — corps en Inter, titres en Cinzel, boutons/labels en monospace, aucun texte dans la police par défaut du navigateur (mutation-vérifié : remettre le reset après `index.css` fait réapparaître « Times »), Inter chargée depuis le site (italique et latin-ext seulement si besoin)
   - `e2e/self-hosted.spec.ts` — aucune requête vers googleapis/gstatic, Cinzel chargée depuis l'origine du site
   - `e2e/oauth-only.spec.ts` — build de production, connexion OAuth uniquement : pas de champs email/mot de passe, `/signup` → `/login`, un seul « Sign in », code du formulaire email jamais téléchargé, destination transmise au fournisseur, retour connecté → destination, `redirectTo` hostile ignoré (mutation-vérifié)
   - `e2e/undertaker.spec.ts` — illustration du croque-mort : décorative, chargée, sans chevauchement (nav/titre/formulaire/aperçu) à 320/375/768/1280 px, fichiers WebP optimisés, absente de la page d'édition
