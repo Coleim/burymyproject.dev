@@ -208,6 +208,69 @@ try {
       (reassign?.length ?? 0) === 0,
       `rows updated: ${reassign?.length}`,
     );
+
+    // --- Hardening (migration 20261020150000_harden_graves) ---
+    const { data: forged } = await clientA
+      .from("graves")
+      .insert({
+        author_id: userAId,
+        name: "RLS Integration Test — Forged date",
+        epitaph: "Trying to stay on top forever.",
+        born: "2024-01-01",
+        died: "2024-02-01",
+        cause: "Cheating",
+        tech_stack: [],
+        is_public: false,
+        tombstone_bg: "grave_bg_01.webp",
+        tombstone_fg: "grave_01.webp",
+        created_at: "2099-01-01T00:00:00Z",
+      })
+      .select("*")
+      .single();
+    check(
+      "created_at is server-controlled on insert (2099 is ignored)",
+      !!forged && new Date(forged.created_at).getFullYear() < 2090,
+      `created_at: ${forged?.created_at}`,
+    );
+
+    const { data: tampered } = await clientA
+      .from("graves")
+      .update({
+        created_at: "2099-01-01T00:00:00Z",
+        public_slug: "hijacked-slug",
+        tombstone_bg: "evil.webp",
+      })
+      .eq("id", publicGrave.id)
+      .select("*");
+    check(
+      "created_at, public_slug and tombstone cannot be changed on update",
+      tampered?.[0]?.created_at === publicGrave.created_at &&
+        tampered?.[0]?.public_slug === publicGrave.public_slug &&
+        tampered?.[0]?.tombstone_bg === publicGrave.tombstone_bg,
+    );
+
+    const { error: tooLongError } = await clientA
+      .from("graves")
+      .update({ description: "x".repeat(1001) })
+      .eq("id", publicGrave.id);
+    check(
+      "A 1001-character description is rejected by the database",
+      !!tooLongError,
+    );
+
+    const { error: badUrlError } = await clientA
+      .from("graves")
+      .update({ project_url: "javascript:alert(1)" })
+      .eq("id", publicGrave.id);
+    check("A javascript: project_url is rejected by the database", !!badUrlError);
+
+    const { error: anonInsertError } = await anonClient.from("graves").insert({
+      author_id: userAId,
+      name: "Anonymous insert",
+      tombstone_bg: "grave_bg_01.webp",
+      tombstone_fg: "grave_01.webp",
+    });
+    check("Anonymous visitor CANNOT insert a grave", !!anonInsertError);
   }
 } finally {
   // --- Cleanup: always runs, even if an assertion threw ---

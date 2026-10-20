@@ -120,8 +120,23 @@ create policy "author can delete own graves"
 - Validation des inputs côté client via zod (`src/lib/schemas/grave.ts`) ; pas de validation serveur additionnelle (pas de backend custom) — **la RLS est la seule barrière d'autorisation réelle**, donc toute nouvelle requête Supabase doit être pensée en gardant ça à l'esprit.
 - Pas de `SUPABASE_SERVICE_ROLE_KEY` dans le code client (uniquement la clé `anon`/`publishable`).
 - `public_slug` généré côté BDD (`default` SQL), jamais côté client.
-- Headers de sécurité (`X-Frame-Options`, `X-Content-Type-Options`, etc.) : **pas encore configurés**, à faire au niveau de l'hébergeur au moment du déploiement (pas de `next.config.js` ici, voir config Vercel/Netlify `_headers`).
+- **Content-Security-Policy** : livrée en `<meta>` dans le build de production (plugin `cspMetaPlugin` de `vite.config.ts`, hash sha256 du script inline calculé automatiquement ; origine Supabase prise dans `VITE_SUPABASE_URL`). `script-src 'self'` sans `unsafe-inline`/`unsafe-eval` (zod passe en `jitless`, cf. `src/lib/zodConfig.ts`), `style-src` sans `unsafe-inline`, `object-src 'none'`, `base-uri`/`form-action 'self'`. Vérifiée en navigateur réel sur le build de prod et par `e2e/csp.spec.ts` (projet Playwright `production-build`). **Limites GitHub Pages** : pas de vrais en-têtes HTTP, donc ni `X-Frame-Options`/`frame-ancestors` (clickjacking), ni `X-Content-Type-Options`, ni `Permissions-Policy` ; à revoir avec un hébergeur qui permet des headers (Cloudflare Pages/Netlify/Vercel).
 - `.env.local` et tout `.env.*` (sauf `.env.example`) sont ignorés par git.
+
+### Durcissement du 20/10/2026 (revue RLS / Vague F)
+
+Migration versionnée `supabase/migrations/20261020150000_harden_graves.sql`, appliquée en prod et vérifiée par simulation de rôles (`anon`, `authenticated` auteur, `authenticated` autre utilisateur, admin) dans une transaction annulée :
+
+- **Grants au moindre privilège** : `anon` = `SELECT` seul ; `authenticated` = `SELECT/INSERT/UPDATE/DELETE`. Plus de `TRUNCATE`/`TRIGGER`/`REFERENCES` (que la RLS ne couvre pas).
+- **Policies** recréées par rôle (`anon, authenticated` pour la lecture, `authenticated` pour l'écriture), `(select auth.uid())` (évalué une fois par requête : l'advisor performance passe de plusieurs WARN à 0), `WITH CHECK` explicite sur UPDATE.
+- **Trigger `protect_grave_columns`** (rôles API uniquement ; migrations, seeds et `service_role` gardent le contrôle) : `created_at`/`updated_at` forcés à `now()` à l'insertion (empêche de se postdater en 2099 pour rester en tête de « Recently Buried »), `created_at`/`public_slug`/`tombstone_*` figés à l'update, **plafond de 200 tombes par utilisateur** (anti-abus).
+- **Contraintes CHECK** reflétant le schéma zod (description ≤ 1000, epitaph ≤ 280, cause ≤ 200, tech_stack ≤ 20 éléments / 1000 car., tombstone ≤ 100, format de `public_slug`), car la validation zod est contournable en appelant l'API directement.
+- `set_updated_at` : `search_path` figé ; `rls_auto_enable()` (fonction du trigger d'événement `ensure_rls`, qui active la RLS sur toute nouvelle table `public`) n'est plus exécutable via `/rest/v1/rpc`.
+- **Auth** : longueur minimale de mot de passe passée de 6 à 8 côté serveur (alignée sur le client, qui était contournable).
+- **Open redirect corrigé** : `?redirectTo=` du login était passé tel quel à `navigate()` (`?redirectTo=https://evil.com` redirigeait après connexion). Désormais filtré par `safeRedirectPath` (chemins internes uniquement ; 21 cas unitaires + e2e réels, test de mutation vérifié).
+- **Dépendances** : `npm audit fix` → 0 vulnérabilité (react-router-dom 7.18.4, vite 8.3.4, ws 8.22.0).
+- Cas ajoutés à `scripts/rls-integration-test.mjs` (exécuté en CI avec la clé service) : date forcée, champs figés, limites de taille, URL `javascript:` refusée, insertion anonyme refusée.
+- **Risques acceptés / non traités** : protection contre les mots de passe compromis (HIBP, plan Pro) ; captcha (nécessite un compte) ; `author_id` (UUID) exposé en lecture publique car utilisé pour les stats de la landing ; `localhost` conservé dans `uri_allow_list` pour le dev ; pas de pentest externe.
 
 ## Architecture des routes (réelle)
 
@@ -277,7 +292,7 @@ Code front en place (`OAuthButtons.tsx` (Google + GitHub, liste de providers), t
 - [x] Vérification a11y approfondie (contraste réel mesuré, navigation clavier : skip link, ordre de tab, indicateurs de focus, menu mobile)
 - [ ] Responsive fin sur petits écrans (fait : bouton de création après la preview sur mobile, menu hamburger dans la Navbar ; reste à re-tester composant par composant)
 - [ ] Métadonnées Open Graph dynamiques par tombe (voir Scaling, Phase 2)
-- [ ] Headers de sécurité (`X-Frame-Options`, etc.) — à ajouter en meta tags ou via un futur hébergeur supportant les headers custom (GitHub Pages ne permet pas de headers custom nativement)
+- [x] Headers de sécurité : CSP livrée en meta (cf. section Sécurité) ; `X-Frame-Options` & co impossibles sans hébergeur supportant les headers
 - [ ] Verification d'architecture et scalabilités
 - [x] Review du project : Good practices a verifier, tels que KISS, YAGNI, DRY, etc ... — fait un premier passage DRY : le pattern fond+overlay (`.page::before`/`.page::after`) était dupliqué à l'identique dans 7 fichiers CSS, factorisé via `composes` (`src/shared/styles/pageBackground.module.css`). Note technique : les `@keyframes` ne peuvent **pas** être partagées de la même façon (CSS Modules localise le nom utilisé dans `animation:` même sans `@keyframes` local correspondant dans le fichier — testé, ça casse l'animation en silence) ; elles restent dupliquées intentionnellement (3 occurrences identiques, `TombstoneCard`/`LandingPage`/`GravePage`).
 - [x] Skeletons de chargement (`TombstoneCardSkeleton`) sur `/cemetery`, `/my-graves` et `/graves/:slug`, remplace le texte "Loading..."
@@ -290,11 +305,11 @@ Code front en place (`OAuthButtons.tsx` (Google + GitHub, liste de providers), t
 - [x] Déploiement statique sur **GitHub Pages** (CI via GitHub Actions, cf. section GitHub Pages ci-dessus)
 - [x] Variables d'env en prod (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`) injectées via secrets GitHub Actions au build
 - [ ] Domaine custom + HTTPS (optionnel, GitHub Pages fournit déjà HTTPS sur `coleim.github.io`)
-- [ ] Headers de sécurité (non supportés nativement par GitHub Pages — à revoir si migration vers un hébergeur avec contrôle des headers, cf. Phase 2)
+- [~] Headers de sécurité : CSP en meta faite ; le reste nécessite un hébergeur avec contrôle des headers (cf. Phase 2)
 - [ ] Monitoring erreurs front (Sentry free tier ou équivalent)
 - [ ] Vérifier le plan Supabase Free (backups, quotas) et activer un export manuel périodique si besoin
 - [ ] Analytics simple (Plausible/Umami) pour mesurer l'usage réel
-- [ ] Test de securité (pentests)
+- [~] Test de sécurité : revue RLS/advisors/audit/OWASP faits (Vague F) ; pentest externe non fait
 
 ### Phase 1 — Jusqu'à ~1 000 users
 
@@ -338,7 +353,7 @@ L'app est déployée en continu sur GitHub Pages (project page `coleim.github.io
 
 - Config : `vitest.config.ts` (environnement `jsdom`, alias `@`, exclut `e2e/**`)
 - Scripts : `npm run test:unit` / `npm run test:unit:watch`
-- Couverture actuelle (42 tests, 8 fichiers) :
+- Couverture actuelle (63 tests, 9 fichiers) :
   - `src/lib/schemas/grave.test.ts` — règles zod (`died >= born`, champs optionnels, limite `tech_stack`)
   - `src/shared/components/TagInput.test.tsx` — ajout/suppression de tags, anti-doublon, limite `max`
   - `src/shared/components/TombstoneCard.test.tsx` — rendu des props, lien conditionnel vers `/graves/:slug`
@@ -352,12 +367,17 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (50 tests, 12 fichiers) :
+- Couverture actuelle (57 tests, 13 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
-  - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion
+  - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion, `redirectTo` externe ignoré (open redirect)
   - `e2e/create-grave.spec.ts` — connexion → création d'une tombe → redirection vers `/graves/:slug`
   - `e2e/404.spec.ts` — route inconnue et slug de tombe inexistant
+  - `e2e/cemetery.spec.ts` — pagination « Load more » (mock de 4000 tombes), recherche, états vide/erreur
+  - `e2e/edit-grave.spec.ts` — édition par l'auteur, not-found si pas propriétaire, redirection si déconnecté
+  - `e2e/seo.spec.ts` — meta Open Graph/description/canonical, image de partage servie, titres de page
+  - `e2e/a11y.spec.ts` (axe WCAG + best-practice, 10 pages × desktop/mobile), `e2e/keyboard.spec.ts` (skip link, focus, menu, reduced motion), `e2e/responsive.spec.ts` (pas de scroll horizontal 320→1440 px)
+  - `e2e/csp.spec.ts` — build de production (projet Playwright `production-build`, `vite preview`) : politique CSP stricte, aucune violation sur toutes les pages, script de restauration SPA autorisé
 
 ### Intégration — RLS contre le vrai Supabase
 
@@ -396,7 +416,7 @@ Découpage convenu pour la suite, auth/Google OAuth/fiabilité email expliciteme
 - [x] **Vague C — a11y & responsive** : audit axe automatisé (WCAG 2.0/2.1 A+AA + best-practice) sur 10 pages × desktop/mobile, devenu test de non-régression (`e2e/a11y.spec.ts`). Corrigé : liens de cartes dont le nom accessible ne contenait pas le texte visible (WCAG 2.5.3), liens dans du texte distingués par la seule couleur (soulignés), classe CSS `undefined` sur les cartes « featured », absence de landmark `<main>` (composant `Main`) + lien « Skip to main content », ordre des titres (`headingLevel` sur `TombstoneCard`, `<h1>` sur la page d'une tombe), `prefers-reduced-motion`, alt du logo redondant, retour du focus sur le bouton du menu après Échap. **Contraste** : axe ne peut PAS le vérifier ici (fonds en pseudo-éléments/images → « incomplete »), donc mesuré à la main en échantillonnant les pixels réels derrière chaque texte (5 largeurs 320→1280, 12 pages) : `--color-text-muted` #6b7280 → #9aa1ae (ratios 2,9–4,05 → ≥ 4,5) et `--color-text-secondary` #a8a8b3 → #b8b8c3. Responsive : aucun scroll horizontal de 320 à 1440 px (`e2e/responsive.spec.ts`) ; bug corrigé : titre du hero fixe à 80 px débordait à 320 px (désormais `clamp`). Politique de confidentialité mise à jour (GitHub, lien projet, Google Fonts).
 - [ ] **Vague D — Monitoring & analytics** : Sentry (erreurs front) + Plausible/Umami (analytics) — nécessite la création de comptes externes par l'utilisateur
 - [x] **Vague E — Scaling léger** : pagination sur `/cemetery` faite (perf validée sur 4000 lignes réelles, cf. Tests de charge ; index `pg_trgm` à ajouter seulement si la recherche devient lente à plus grande échelle)
-- [ ] **Vague F — Sécurité** : revue RLS, `npm audit`, checklist OWASP basique (pentest externe hors de portée d'un agent IA) ; headers de sécurité impossibles nativement sur GitHub Pages (limitation documentée, cf. Sécurité)
+- [x] **Vague F — Sécurité** : revue RLS + advisors Supabase (cf. « Durcissement du 20/10/2026 »), `npm audit` (0 vulnérabilité), checklist OWASP basique (injection : requêtes paramétrées via PostgREST + `ilike` échappé ; XSS : pas de `dangerouslySetInnerHTML`/`eval`, liens sortants en `noopener noreferrer`, URL stockées filtrées http(s) en BDD et à l'affichage ; broken access control : RLS testée ; open redirect corrigé ; secrets : aucun dans le dépôt, clé service uniquement en CI), CSP en meta (headers HTTP impossibles sur GitHub Pages). Reste hors périmètre : pentest externe, HIBP (Pro), captcha.
 
 ## Rappel de méthode
 

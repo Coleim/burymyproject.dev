@@ -1,4 +1,5 @@
 import { Button } from "@/shared/components/Button";
+import { safeRedirectPath } from "@/lib/safeRedirect";
 import { supabase } from "@/lib/supabase";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -29,8 +30,10 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
 
-  const redirectTo =
-    new URLSearchParams(location.search).get("redirectTo") || "/my-graves";
+  const redirectTo = safeRedirectPath(
+    new URLSearchParams(location.search).get("redirectTo"),
+    "/my-graves",
+  );
 
   async function onSubmit(values: LoginValues) {
     setFormError(null);
