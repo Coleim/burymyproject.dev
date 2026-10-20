@@ -49,6 +49,7 @@ create table public.graves (
   died         date,
   cause        text,
   tech_stack   text[] not null default '{}',
+  project_url  text check (project_url is null or (char_length(project_url) <= 500 and project_url ~* '^https?://[^\s]+$')),  -- migration supabase/migrations/20261020120000_add_project_url.sql
   public_slug  text unique not null default translate(encode(gen_random_bytes(6), 'base64'), '+/=', '-_'),
   is_public    boolean not null default true,
   tombstone_bg text not null default 'grave_bg_01.webp',  -- assigned once at creation, fixed forever (not user-editable yet)
@@ -142,7 +143,10 @@ src/
 │   ├── grave/
 │   │   ├── types.ts                   # Type Grave (aligné sur le schéma SQL)
 │   │   ├── GraveForm.tsx / .module.css
+│   │   ├── GraveFormShell.tsx         # coque de page partagée (création/édition)
+│   │   ├── graveRow.ts                # mapping valeurs du formulaire → colonnes (insert/update)
 │   │   ├── NewGravePage.tsx           # /graves/new (protégé)
+│   │   ├── EditGravePage.tsx          # /graves/:slug/edit (protégé, auteur uniquement)
 │   │   └── GravePage.tsx / .module.css # /graves/:slug (public)
 │   ├── graveyard/
 │   │   ├── MyGravesPage.tsx           # /my-graves (protégé)
@@ -181,6 +185,7 @@ src/
 | `/graves/:slug` | Public | Tombe individuelle, 404 thématique si non trouvée/non publique |
 | `/my-graves` | Authentifié (`ProtectedRoute`) | Mes tombes (publiques + privées), suppression, empty state |
 | `/graves/new` | Authentifié (`ProtectedRoute`) | Création d'une tombe |
+| `/graves/:slug/edit` | Authentifié (`ProtectedRoute`) | Édition d'une tombe (la requête filtre sur `author_id` → « not found » si ce n'est pas la sienne) ; l'image de tombe reste fixe |
 | `*` | Public | 404 thématique générique |
 
 Pas de middleware serveur (CSR pur) : la protection de route est gérée par `ProtectedRoute` côté client (redirection si pas de session), la sécurité réelle des données reste portée par la RLS Supabase.
@@ -219,7 +224,7 @@ Pas de middleware serveur (CSR pur) : la protection de route est gérée par `Pr
 - [x] `Navbar` dynamique selon session
 - [x] `emailRedirectTo` explicite dans `signUp()` (origin + base path, robuste multi-environnement)
 - [x] Config Supabase Auth : `site_url` + `uri_allow_list` pointent vers GitHub Pages (+ localhost dev/e2e)
-- [x] `GoogleSignInButton` ajouté sur Login/SignUp (code prêt, cf. "Google OAuth — reste à faire")
+- [x] Boutons OAuth (`OAuthButtons.tsx` : Google + GitHub) sur Login/SignUp
 - [x] **Test manuel** : signup, login, création de tombe publique/privée, RLS (lecture/update/delete croisés entre utilisateurs) — tout validé via script contre le vrai projet Supabase le 17/10/2026. Seul point non testable automatiquement : le vrai flow d'email de confirmation (bloqué par le rate limit du mailer par défaut, cf. Milestone 1) — contourné via `mailer_autoconfirm` temporaire pour le test, remis à `false` immédiatement après.
 
 #### ⚠️ Problème connu : emails de confirmation peu fiables
@@ -230,14 +235,21 @@ Décision prise : **mettre Resend de côté pour l'instant** (nécessite un nom 
 
 **Reste à faire plus tard** : trouver une vraie solution d'envoi d'email (acheter un petit domaine dédié type `burymyproject.dev` chez un registrar, le vérifier sur Resend/un autre fournisseur SMTP transactionnel, puis reconfigurer `smtp_host`/`smtp_user`/`smtp_pass` via l'API Management Supabase) pour que l'auth email/password redevienne pleinement fiable en plus de Google OAuth.
 
-#### Google OAuth — reste à faire
+#### GitHub OAuth — configuré (20/10/2026)
 
-Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` et `SignUpPage`, appelle `supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: origin + BASE_URL } })`). Il manque la configuration :
+- [x] OAuth App GitHub (callback `https://bibzxeryywqvjwoejgwz.supabase.co/auth/v1/callback`), provider activé via l'API Management (`external_github_enabled: true`)
+- [x] Bouton « Continue with GitHub » sur `/login` et `/signup` via `OAuthButtons` (remplace `GoogleSignInButton`) ; e2e (redirection vers `/auth/v1/authorize?provider=github`) + test réel navigateur jusqu'à la page de login GitHub
+- [ ] Test manuel du login complet GitHub → retour sur l'app → `/my-graves`
+- ~~LinkedIn (provider OIDC)~~ : abandonné (nécessite une Company Page LinkedIn)
 
-- [ ] **Google Cloud Console** : créer un projet (ou réutiliser), configurer l'OAuth consent screen (type External), créer des identifiants **OAuth client ID** (type Web application)
-- [ ] **Authorized redirect URI** à renseigner exactement : `https://bibzxeryywqvjwoejgwz.supabase.co/auth/v1/callback`
-- [ ] Récupérer le **Client ID** et le **Client Secret**
-- [ ] Activer le provider côté Supabase via l'API Management (`PATCH /v1/projects/{ref}/config/auth` avec `external_google_enabled: true`, `external_google_client_id`, `external_google_secret`)
+#### Google OAuth — configuré, test manuel restant
+
+Code front en place (`OAuthButtons.tsx` (Google + GitHub, liste de providers), toujours visible sur `LoginPage` et `SignUpPage`, appelle `supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: origin + BASE_URL } })`). Config faite le 20/10/2026 :
+
+- [x] **Google Cloud Console** : projet + OAuth consent screen (External) + OAuth client ID (Web application)
+- [x] **Authorized redirect URI** : `https://bibzxeryywqvjwoejgwz.supabase.co/auth/v1/callback`
+- [x] Provider activé côté Supabase via l'API Management (`external_google_enabled: true`) ; `/auth/v1/authorize?provider=google` redirige bien vers Google
+- [ ] Consent screen à passer en « In production » (sinon seuls les test users peuvent se connecter)
 - [ ] **Test** : bouton "Continue with Google" sur `/login` et `/signup`, vérifier la redirection complète (Google → Supabase callback → retour sur l'app, session créée, redirection vers `/my-graves`)
 
 ### Milestone 2 — Créer une tombe ✅ fait
@@ -252,7 +264,7 @@ Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` 
 - [x] `TombstoneCard` partagé
 - [x] `/graves/:slug` (SSR non applicable en CSR ; fetch client + 404 thématique)
 - [x] `/my-graves` (grille, suppression, empty state)
-- [x] `/cemetery` (grille publique, limite 24, pas encore de pagination infinie)
+- [x] `/cemetery` (grille publique, pagination « Load more » par 24 via `range()` + count exact, recherche par nom `ilike` avec debounce 300 ms ; recherche tech stack non faite, cf. Features à venir)
 - [x] Landing : "Recently Buried" branché sur les vraies données
 - [x] **Test manuel** : confirmé qu'une tombe privée n'est accessible ni par un visiteur anonyme ni par un autre utilisateur authentifié (cf. Milestone 1)
 
@@ -263,7 +275,7 @@ Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` 
 - [x] Tests unitaires (Vitest + RTL) et E2E (Playwright) — cf. section Tests locaux
 - [x] Déploiement GitHub Pages (CI + hack SPA) — cf. section GitHub Pages
 - [ ] Vérification a11y approfondie (contraste réel mesuré, navigation clavier complète sur tous les composants interactifs)
-- [ ] Responsive fin sur petits écrans (actuellement hérité du CSS existant, pas re-testé composant par composant)
+- [ ] Responsive fin sur petits écrans (fait : bouton de création après la preview sur mobile, menu hamburger dans la Navbar ; reste à re-tester composant par composant)
 - [ ] Métadonnées Open Graph dynamiques par tombe (voir Scaling, Phase 2)
 - [ ] Headers de sécurité (`X-Frame-Options`, etc.) — à ajouter en meta tags ou via un futur hébergeur supportant les headers custom (GitHub Pages ne permet pas de headers custom nativement)
 - [ ] Verification d'architecture et scalabilités
@@ -287,7 +299,7 @@ Code front déjà en place (`GoogleSignInButton.tsx`, intégré sur `LoginPage` 
 ### Phase 1 — Jusqu'à ~1 000 users
 
 - [ ] Surveiller les quotas Supabase Free (500 MB DB, 50k MAU auth) ; passer en Pro si besoin
-- [ ] Pagination réelle sur `/cemetery` (actuellement limité à 24 lignes, pas de `range()`/curseur)
+- [x] Pagination réelle sur `/cemetery` (« Load more », `range()`, count exact ; testée sur un mock de 4000 tombes et sur 4000 tombes réelles seedées, cf. section Tests de charge)
 - [ ] Cache client (`@tanstack/react-query` ou équivalent) pour éviter les refetchs inutiles
 - [ ] Sitemap + meta tags statiques basiques pour le SEO
 - [ ] Rate limiting applicatif sur signup/création de tombe (abuse prevention)
@@ -326,7 +338,7 @@ L'app est déployée en continu sur GitHub Pages (project page `coleim.github.io
 
 - Config : `vitest.config.ts` (environnement `jsdom`, alias `@`, exclut `e2e/**`)
 - Scripts : `npm run test:unit` / `npm run test:unit:watch`
-- Couverture actuelle (21 tests, 5 fichiers) :
+- Couverture actuelle (40 tests, 7 fichiers) :
   - `src/lib/schemas/grave.test.ts` — règles zod (`died >= born`, champs optionnels, limite `tech_stack`)
   - `src/shared/components/TagInput.test.tsx` — ajout/suppression de tags, anti-doublon, limite `max`
   - `src/shared/components/TombstoneCard.test.tsx` — rendu des props, lien conditionnel vers `/graves/:slug`
@@ -340,7 +352,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (13 tests, 5 fichiers) :
+- Couverture actuelle (33 tests, 8 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion
@@ -355,6 +367,13 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Nettoyage systématique en `finally` (users + graves supprimés), même si une assertion échoue
 - Nécessite le secret `SUPABASE_SERVICE_ROLE_KEY` en plus des deux secrets existants
 
+### Tests de charge — seed de fausses tombes
+
+- `npm run seed -- [count]` (`scripts/seed-graves.mjs`, défaut 4000) crée un utilisateur dédié `seed-bot@burymyproject.invalid` et N tombes `[SEED] ...` (dates `created_at` antidatées pour rester sous les vraies tombes, ~5 % privées). Idempotent.
+- `npm run seed:remove` (`scripts/unseed-graves.mjs`) supprime ce seul utilisateur ; `graves.author_id ... on delete cascade` supprime toutes les tombes seedées.
+- Passe par l'API Management (HTTPS) : env `SUPABASE_ACCESS_TOKEN` + `VITE_SUPABASE_URL`. Nécessite Node ≥ 22.18 (le script importe les constantes TypeScript).
+- Résultats du 20/10/2026 (4000 tombes, rôle `anon`, RLS incluse, `EXPLAIN ANALYZE`) : page 1 ≈ 4 ms, page 150 (offset 3576) ≈ 2 ms, `count(*)` ≈ 1,3 ms, recherche `ilike '%x%'` ≈ 6-7 ms (seq scan, linéaire). Parcours UI réel (Load more ×3, recherche, no-results) sans erreur. Si la table atteint ~100k lignes : index `pg_trgm` sur `name` (ou `search_text`) et pagination par curseur (`created_at`) à la place de `offset`.
+
 ### CI
 
 Intégré dans `.github/workflows/deploy.yml` (job `test`), bloque le déploiement si lint/tsc/unit/rls/e2e échouent.
@@ -363,7 +382,10 @@ Intégré dans `.github/workflows/deploy.yml` (job `test`), bloque le déploieme
 
 - **Choisir sa tombe** : actuellement, l'image de tombe (fond + premier plan) est assignée aléatoirement à la création et fixée définitivement (colonnes `tombstone_bg`/`tombstone_fg` sur `graves`). Un bouton désactivé "🔒 Choose your tombstone" est déjà présent dans `/graves/new` pour montrer que cette fonctionnalité arrivera. Prévu comme **feature payante** : permettre à l'utilisateur de choisir manuellement son image de tombe parmi la collection (ou en débloquer plus).
 - **Génération IA d'epitaph/cause** : le bouton "✨ Generate" pioche actuellement dans des listes statiques (`src/lib/constants/graveContent.ts`, ~20 phrases chacune). Prévu à terme : remplacer par un vrai appel à un modèle IA pour générer une phrase contextuelle (basée sur le nom du projet, la stack technique, etc.), sans changer l'UX du bouton.
-- **Éditer une tombe existante** (cf. `FEATURES.MD`) : actuellement une tombe créée ne peut plus être modifiée après coup (seulement supprimée). À concevoir : formulaire d'édition réutilisant `GraveForm`, policy RLS `UPDATE` déjà en place côté BDD.
+- **Recherche par tech stack** : la recherche actuelle ne porte que sur le nom (`tech_stack` est un `text[]`, pas de `ilike` direct). Option envisagée : colonne `search_text` + index `pg_trgm` via migration.
+- ~~**Éditer une tombe existante**~~ ✅ fait : route `/graves/:slug/edit` réutilisant `GraveForm` (props `defaultValues`/`tombstone`), bouton « Edit this grave » visible uniquement pour l'auteur sur `/graves/:slug`. Policy RLS UPDATE vérifiée : l'auteur peut modifier, mais pas réattribuer `author_id` (la clause `USING` sert aussi de `WITH CHECK`) ; un autre utilisateur modifie 0 ligne. Cas ajoutés dans `scripts/rls-integration-test.mjs`.
+
+- ✅ **Lien vers le projet** : colonne `project_url` (migration versionnée dans `supabase/migrations/`), contrainte BDD http(s) uniquement (rejette `javascript:`, sans schéma, espaces, > 500 car.), validation zod côté formulaire, affichage sur `/graves/:slug` en lien sortant (`target="_blank" rel="noopener noreferrer"`, et seulement si l'URL stockée est http(s)).
 
 ## Roadmap vers la prod (hors auth, mise de côté sur demande)
 
@@ -373,7 +395,7 @@ Découpage convenu pour la suite, auth/Google OAuth/fiabilité email expliciteme
 - [ ] **Vague B — SEO & partage social** : meta OG statiques dans `index.html` (landing uniquement, le dynamique par tombe nécessite du SSR/edge — limitation documentée), `robots.txt` + `sitemap.xml` généré au build (requête Supabase des tombes publiques)
 - [ ] **Vague C — a11y & responsive** : audit clavier/contraste, passage responsive mobile/tablette
 - [ ] **Vague D — Monitoring & analytics** : Sentry (erreurs front) + Plausible/Umami (analytics) — nécessite la création de comptes externes par l'utilisateur
-- [ ] **Vague E — Scaling léger** : vraie pagination sur `/cemetery` (actuellement limité à 24 lignes en dur)
+- [x] **Vague E — Scaling léger** : pagination sur `/cemetery` faite (perf validée sur 4000 lignes réelles, cf. Tests de charge ; index `pg_trgm` à ajouter seulement si la recherche devient lente à plus grande échelle)
 - [ ] **Vague F — Sécurité** : revue RLS, `npm audit`, checklist OWASP basique (pentest externe hors de portée d'un agent IA) ; headers de sécurité impossibles nativement sur GitHub Pages (limitation documentée, cf. Sécurité)
 
 ## Rappel de méthode
