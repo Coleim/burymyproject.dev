@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { AuthLayout } from "./AuthLayout";
-import { GoogleSignInButton } from "./GoogleSignInButton";
+import { OAuthButtons } from "./OAuthButtons";
 import styles from "./AuthLayout.module.css";
 
 const loginSchema = z.object({
@@ -114,7 +114,7 @@ export function LoginPage() {
       </p>
 
       <div className={styles.divider}>or</div>
-      <GoogleSignInButton />
+      <OAuthButtons />
     </AuthLayout>
   );
 }

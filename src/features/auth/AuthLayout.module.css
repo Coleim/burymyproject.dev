@@ -179,3 +179,16 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.oauth-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.oauth-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #e0695f;
+  text-align: center;
+}
