@@ -26,7 +26,7 @@ async function fetchAllUsers(client) {
 }
 
 /**
- * Everything needed to rebuild the project's data: all graves (private ones
+ * Everything needed to rebuild the project's data: all graves (hidden ones
  * included) and the users with their sign-in identities, so graves can be
  * re-attached to people when they sign in again.
  * `client` is a supabase-js client created with the service-role key.

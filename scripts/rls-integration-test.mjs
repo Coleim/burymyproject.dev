@@ -51,7 +51,6 @@ const emailB = `rls-test-b-${suffix}@example.com`;
 let userAId;
 let userBId;
 let publicGraveId;
-let privateGraveId;
 
 try {
   // --- Create two fully-confirmed test users via the admin API ---
@@ -120,7 +119,7 @@ try {
       : "login was accepted",
   );
 
-  // --- User A creates a public grave and a private grave ---
+  // --- User A creates a grave (every grave is public) ---
   const { data: publicGrave, error: publicGraveError } = await clientA
     .from("graves")
     .insert({
@@ -131,71 +130,61 @@ try {
       died: "2024-02-01",
       cause: "Automated Testing",
       tech_stack: ["React"],
-      is_public: true,
       tombstone_bg: "grave_bg_01.webp",
       tombstone_fg: "grave_01.webp",
+      founding_rank: 3, // a client must not be able to claim a Founding Ghost rank
     })
     .select("*")
     .single();
   check(
-    "User A creates a PUBLIC grave",
+    "User A creates a grave",
     !publicGraveError && !!publicGrave,
     publicGraveError?.message,
   );
   publicGraveId = publicGrave?.id;
 
-  const { data: privateGrave, error: privateGraveError } = await clientA
-    .from("graves")
-    .insert({
-      author_id: userAId,
-      name: "RLS Integration Test — Private",
-      epitaph: "Shh, nobody should see this.",
-      born: "2024-01-01",
-      died: "2024-02-01",
-      cause: "Secrecy",
-      tech_stack: [],
-      is_public: false,
-      tombstone_bg: "grave_bg_01.webp",
-      tombstone_fg: "grave_01.webp",
-    })
-    .select("*")
-    .single();
-  check(
-    "User A creates a PRIVATE grave",
-    !privateGraveError && !!privateGrave,
-    privateGraveError?.message,
-  );
-  privateGraveId = privateGrave?.id;
+  // --- Private graves no longer exist ---
+  const { error: privateAttemptError } = await clientA.from("graves").insert({
+    author_id: userAId,
+    name: "RLS Integration Test — Private attempt",
+    epitaph: "Shh, nobody should see this.",
+    born: "2024-01-01",
+    died: "2024-02-01",
+    cause: "Secrecy",
+    tech_stack: [],
+    is_public: false,
+    tombstone_bg: "grave_bg_01.webp",
+    tombstone_fg: "grave_01.webp",
+  });
+  check("A private grave CANNOT be created", !!privateAttemptError);
 
-  if (publicGrave && privateGrave) {
+  // --- Founding Ghosts: only the database can award a rank ---
+  check(
+    "A client CANNOT set its own Founding Ghost rank (and test accounts never claim one)",
+    publicGrave?.founding_rank === null,
+    `founding_rank: ${publicGrave?.founding_rank}`,
+  );
+  for (const [who, client] of [["Anonymous visitor", anonClient], ["Signed-in user", clientA]]) {
+    const { error: ledgerError } = await client.from("founding_ghosts").select("*");
+    check(`${who} CANNOT read the founding_ghosts ledger`, !!ledgerError);
+  }
+
+  if (publicGrave) {
     // --- Anonymous visitor ---
     const { data: anonReadsPublic } = await anonClient
       .from("graves")
       .select("*")
       .eq("public_slug", publicGrave.public_slug)
       .maybeSingle();
-    check("Anonymous visitor CAN read the PUBLIC grave", !!anonReadsPublic);
-
-    const { data: anonReadsPrivate } = await anonClient
-      .from("graves")
-      .select("*")
-      .eq("public_slug", privateGrave.public_slug)
-      .maybeSingle();
-    check(
-      "Anonymous visitor CANNOT read the PRIVATE grave",
-      anonReadsPrivate === null,
-    );
+    check("Anonymous visitor CAN read the grave", !!anonReadsPublic);
 
     // --- User B (different author) ---
-    const { data: bReadsPrivate } = await clientB
+    const { data: bReadsPublic } = await clientB
       .from("graves")
       .select("*")
-      .eq("public_slug", privateGrave.public_slug)
+      .eq("public_slug", publicGrave.public_slug)
       .maybeSingle();
-    check(
-      "User B CANNOT read user A's PRIVATE grave",
-      bReadsPrivate === null,
-    );
+    check("User B CAN read user A's grave", !!bReadsPublic);
 
     const { error: deleteError, count: deleteCount } = await clientB
       .from("graves")
@@ -252,7 +241,6 @@ try {
         died: "2024-02-01",
         cause: "Cheating",
         tech_stack: [],
-        is_public: false,
         tombstone_bg: "grave_bg_01.webp",
         tombstone_fg: "grave_01.webp",
         created_at: "2099-01-01T00:00:00Z",
@@ -310,10 +298,9 @@ try {
       .single();
     const { count: visibleCount } = await anonClient
       .from("graves")
-      .select("*", { count: "exact", head: true })
-      .eq("is_public", true);
+      .select("*", { count: "exact", head: true });
     check(
-      "Anonymous visitor can call home_stats() and its total matches the public graves",
+      "Anonymous visitor can call home_stats() and its total matches the graves anyone can see",
       !statsError && !!stats && stats.total_graves === visibleCount,
       statsError?.message ?? `stats=${stats?.total_graves} visible=${visibleCount}`,
     );
@@ -369,7 +356,6 @@ try {
         died: "2024-02-01",
         cause: "Curiosity",
         tech_stack: [],
-        is_public: false,
         hidden: true,
         tombstone_bg: "grave_bg_01.webp",
         tombstone_fg: "grave_01.webp",
@@ -387,8 +373,6 @@ try {
 } finally {
   // --- Cleanup: always runs, even if an assertion threw ---
   if (publicGraveId) await admin.from("graves").delete().eq("id", publicGraveId);
-  if (privateGraveId)
-    await admin.from("graves").delete().eq("id", privateGraveId);
   if (userAId) await admin.auth.admin.deleteUser(userAId);
   if (userBId) await admin.auth.admin.deleteUser(userBId);
   console.log("🧹 Cleanup done (test users + graves removed)");

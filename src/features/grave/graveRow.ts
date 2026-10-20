@@ -10,6 +10,5 @@ export function toGraveRow(values: GraveFormValues) {
     cause: values.cause || null,
     tech_stack: values.tech_stack,
     project_url: values.project_url || null,
-    is_public: values.is_public,
   };
 }

@@ -4,6 +4,7 @@ import {
 } from "@/shared/lib/randomGrave";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { FOUNDING_TITLE } from "@/lib/founding";
 import styles from "./TombstoneCard.module.css";
 
 export type TombstoneCardProps = {
@@ -14,6 +15,8 @@ export type TombstoneCardProps = {
   cause?: string | null;
   slug?: string;
   featured?: boolean;
+  /** 1-10: one of the first ten people to bury a grave (their first one). */
+  foundingRank?: number | null;
   /** Heading level of the project name, so the page outline stays in order. */
   headingLevel?: 1 | 2 | 3 | 4;
   /** Filename of the assigned background image, e.g. "grave_bg_03.webp".
@@ -32,6 +35,7 @@ export function TombstoneCard({
   cause,
   slug,
   featured,
+  foundingRank,
   headingLevel = 2,
   bgImage,
   fgImage,
@@ -61,6 +65,11 @@ export function TombstoneCard({
         className={styles["grave-fg"]}
       />
       <div className={styles["tombstone-overlay"]}>
+        {foundingRank ? (
+          <span className={styles["founding-badge"]}>
+            <span aria-hidden="true">👻</span> {FOUNDING_TITLE} №{foundingRank}
+          </span>
+        ) : null}
         <div className={styles["tombstone-top-row"]}>
           <span className={styles["tombstone-dates"]}>
             <span>{startDate ?? "?"}</span>
@@ -80,7 +89,11 @@ export function TombstoneCard({
     </div>
   );
 
-  const className = [styles["tombstone"], featured && styles["tombstone--featured"]]
+  const className = [
+    styles["tombstone"],
+    featured && styles["tombstone--featured"],
+    foundingRank && styles["tombstone--founding"],
+  ]
     .filter(Boolean)
     .join(" ");
 

@@ -12,9 +12,10 @@ export type Grave = {
   tech_stack: string[];
   project_url: string | null;
   public_slug: string;
-  is_public: boolean;
   /** Set by moderators only; the author still sees their own hidden grave. */
   hidden: boolean;
+  /** 1-10 for the first ten people to bury a grave (their first grave), else null. */
+  founding_rank: number | null;
   tombstone_bg: string;
   tombstone_fg: string;
 };

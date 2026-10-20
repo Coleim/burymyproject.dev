@@ -30,7 +30,7 @@ function fakeClient({ graves = [], users = [], gravesError = null } = {}) {
   };
 }
 
-const grave = (i) => ({ id: `g${i}`, name: `Grave ${i}`, is_public: i % 2 === 0, hidden: false });
+const grave = (i) => ({ id: `g${i}`, name: `Grave ${i}`, hidden: i % 2 === 1 });
 const user = (i) => ({
   id: `u${i}`,
   email: `user${i}@example.com`,
@@ -57,9 +57,9 @@ describe("buildSnapshot", () => {
     expect(client.calls.listUsers.map(([page]) => page)).toEqual([1, 2]);
   });
 
-  it("includes private and hidden graves (it's a backup, not a public listing)", async () => {
+  it("includes hidden graves (it's a backup, not a public listing)", async () => {
     const snapshot = await buildSnapshot(fakeClient({ graves: [grave(1), grave(2)] }));
-    expect(snapshot.graves.map((g) => g.is_public)).toEqual([false, true]);
+    expect(snapshot.graves.map((g) => g.hidden)).toEqual([true, false]);
   });
 
   it("keeps what is needed to re-attach graves to people", async () => {

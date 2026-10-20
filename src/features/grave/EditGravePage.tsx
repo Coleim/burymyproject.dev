@@ -94,7 +94,6 @@ export function EditGravePage() {
             cause: grave.cause ?? "",
             tech_stack: grave.tech_stack,
             project_url: grave.project_url ?? "",
-            is_public: grave.is_public,
           }}
         />
       </GraveFormShell>

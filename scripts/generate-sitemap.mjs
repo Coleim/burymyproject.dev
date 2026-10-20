@@ -28,7 +28,6 @@ async function fetchPublicGraves() {
   for (let from = 0; graves.length < MAX_URLS; from += PAGE_SIZE) {
     const url = new URL(`${supabaseUrl}/rest/v1/graves`);
     url.searchParams.set("select", "public_slug,updated_at");
-    url.searchParams.set("is_public", "eq.true");
     url.searchParams.set("hidden", "eq.false");
     url.searchParams.set("order", "created_at.desc");
     const res = await fetch(url, {

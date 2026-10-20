@@ -246,22 +246,6 @@
   margin: 0;
 }
 
-.checkbox-field {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.checkbox-field input {
-  width: 20px;
-  height: 20px;
-}
-
-.checkbox-field label {
-  font-family: var(--font-body);
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-}
 
 .submit {
   margin-top: 0.5rem;

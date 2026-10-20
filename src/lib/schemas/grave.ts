@@ -26,7 +26,6 @@ export const graveSchema = z
       .refine(isHttpUrl, "Enter a valid link starting with http:// or https://")
       .optional()
       .or(z.literal("")),
-    is_public: z.boolean(),
   })
   .refine(
     (data) => {

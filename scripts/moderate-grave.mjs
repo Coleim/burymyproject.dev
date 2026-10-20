@@ -26,7 +26,7 @@ if (!/^[A-Za-z0-9_-]{6,64}$/.test(slug)) {
 }
 
 const select = `
-  select g.public_slug, g.name, g.hidden, g.is_public, g.created_at::date as buried,
+  select g.public_slug, g.name, g.hidden, g.founding_rank, g.created_at::date as buried,
          u.email as author
   from public.graves g left join auth.users u on u.id = g.author_id
   where g.public_slug = ${sqlText(slug)}`;

@@ -4,6 +4,7 @@ import { Navbar } from "@/shared/components/Navbar";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { TombstoneCardSkeleton } from "@/shared/components/TombstoneCardSkeleton";
 import { CONTACT_EMAIL } from "@/lib/contact";
+import { FOUNDING_SLOTS, FOUNDING_TITLE } from "@/lib/founding";
 import { Button } from "@/shared/components/Button";
 import { LinkButton } from "@/shared/components/LinkButton";
 import { supabase } from "@/lib/supabase";
@@ -132,10 +133,19 @@ export function GravePage() {
               bgImage={grave.tombstone_bg}
               fgImage={grave.tombstone_fg}
               featured
+              foundingRank={grave.founding_rank}
               headingLevel={1}
             />
 
             <div className={styles.details}>
+              {grave.founding_rank && (
+                <p className={styles["founding-note"]}>
+                  <span aria-hidden="true">👻</span> {FOUNDING_TITLE} №
+                  {grave.founding_rank} of {FOUNDING_SLOTS}: one of the first
+                  ten graves ever dug here.
+                </p>
+              )}
+
               {grave.description && (
                 <p className={styles.description}>{grave.description}</p>
               )}

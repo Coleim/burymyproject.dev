@@ -95,8 +95,8 @@ export type MockGrave = {
   tech_stack: string[];
   project_url: string | null;
   public_slug: string;
-  is_public: boolean;
   hidden: boolean;
+  founding_rank: number | null;
   tombstone_bg: string;
   tombstone_fg: string;
   created_at: string;
@@ -116,8 +116,8 @@ export function makeGrave(overrides: Partial<MockGrave> = {}): MockGrave {
     tech_stack: ["React", "Node"],
     project_url: null,
     public_slug: "devflow-abc123",
-    is_public: true,
     hidden: false,
+    founding_rank: null,
     tombstone_bg: "grave_bg_01.webp",
     tombstone_fg: "grave_01.webp",
     created_at: now(),
@@ -127,7 +127,7 @@ export function makeGrave(overrides: Partial<MockGrave> = {}): MockGrave {
 }
 
 export function homeStatsFor(graves: MockGrave[]) {
-  const publicGraves = graves.filter((g) => g.is_public);
+  const publicGraves = graves.filter((g) => !g.hidden);
   const counts = new Map<string, number>();
   for (const g of publicGraves) {
     if (g.cause) counts.set(g.cause, (counts.get(g.cause) ?? 0) + 1);

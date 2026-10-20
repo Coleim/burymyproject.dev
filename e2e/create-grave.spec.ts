@@ -163,6 +163,8 @@ test.describe("project link", () => {
 
     await expect(page).toHaveURL(/\/graves\/linked-1$/);
     expect(postBody).toMatchObject({ project_url: "https://github.com/me/linked" });
+    // Every grave is public: the client no longer sends a visibility flag.
+    expect(postBody).not.toHaveProperty("is_public");
 
     const link = page.getByRole("link", { name: /visit the project/i });
     await expect(link).toHaveAttribute("href", "https://github.com/me/linked");

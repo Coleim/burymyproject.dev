@@ -32,7 +32,7 @@ for (const viewport of [
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
 
     test("public pages", async ({ page }) => {
-      const grave = makeGrave({ public_slug: "a11y-1", project_url: "https://github.com/me/x" });
+      const grave = makeGrave({ public_slug: "a11y-1", project_url: "https://github.com/me/x", founding_rank: 1 });
       await mockPaginatedGraves(page, [grave, ...makeManyGraves(5)]);
       const report: Record<string, unknown> = {};
       for (const path of ["", "cemetery", "graves/a11y-1", "login", "signup", "privacy", "terms", "nope"]) {

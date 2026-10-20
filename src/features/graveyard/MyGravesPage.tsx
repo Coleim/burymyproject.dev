@@ -99,6 +99,7 @@ export function MyGravesPage() {
                   bgImage={grave.tombstone_bg}
                   fgImage={grave.tombstone_fg}
                   slug={grave.public_slug}
+                  foundingRank={grave.founding_rank}
                 />
               ))}
             </div>

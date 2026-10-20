@@ -44,8 +44,8 @@ export function TermsPage() {
                 You keep ownership of what you post (project name, epitaph,
                 description, dates, cause of death, tech stack, project link).
                 By posting it you give us permission to store it and to display
-                it on the site — publicly if you mark the grave public, and in
-                places such as the cemetery, the home page and search engines.
+                it on the site — graves are public, and appear in places such
+                as the cemetery, the home page and search engines.
                 You confirm that you have the right to post it.
               </p>
               <p>Please don't post content that:</p>

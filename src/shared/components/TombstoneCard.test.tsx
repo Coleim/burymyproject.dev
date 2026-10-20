@@ -44,4 +44,39 @@ describe("TombstoneCard", () => {
 
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
+
+  describe("Founding Ghost", () => {
+    const renderCard = (foundingRank?: number | null) =>
+      render(
+        <MemoryRouter>
+          <TombstoneCard name="DevFlow" slug="devflow-abc123" foundingRank={foundingRank} />
+        </MemoryRouter>,
+      );
+
+    it.each([1, 4, 10])("shows a text badge with the rank %i", (rank) => {
+      renderCard(rank);
+      expect(screen.getByText(new RegExp(`Founding Ghost\\s*№${rank}$`))).toBeInTheDocument();
+    });
+
+    it("does not rely on colour alone: the badge is part of the link's accessible name", () => {
+      renderCard(3);
+      expect(screen.getByRole("link")).toHaveAccessibleName(/Founding Ghost\s*№3/);
+    });
+
+    it("marks the card so the golden styling applies", () => {
+      renderCard(2);
+      expect(screen.getByRole("link").className).toMatch(/tombstone--founding/);
+    });
+
+    it.each([undefined, null, 0])("shows nothing for an ordinary grave (foundingRank = %s)", (rank) => {
+      renderCard(rank as number | null | undefined);
+      expect(screen.queryByText(/Founding Ghost/)).toBeNull();
+      expect(screen.getByRole("link").className).not.toMatch(/tombstone--founding/);
+    });
+
+    it("hides the decorative emoji from assistive technology", () => {
+      renderCard(1);
+      expect(screen.getByText("👻")).toHaveAttribute("aria-hidden", "true");
+    });
+  });
 });

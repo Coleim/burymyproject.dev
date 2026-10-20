@@ -2,7 +2,7 @@
  * Encrypted export of the project's data (graves + users). There are no
  * automatic backups on the Supabase Free plan; the scheduled workflow
  * .github/workflows/backup.yml runs this weekly. The repository is public, so
- * the file is ALWAYS encrypted: it contains emails and private graves.
+ * the file is ALWAYS encrypted: it contains emails and the account list.
  *
  * Usage:  npm run export [-- --out backup.bmpx]
  *         npm run export:decrypt -- backup.bmpx [--out backup.json]

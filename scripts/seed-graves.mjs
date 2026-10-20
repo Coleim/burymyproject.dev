@@ -66,7 +66,7 @@ with
     from generate_series(1, ${count}) i cross join consts c
   )
 insert into public.graves
-  (author_id, name, epitaph, cause, born, died, tech_stack, is_public,
+  (author_id, name, epitaph, cause, born, died, tech_stack,
    tombstone_bg, tombstone_fg, created_at)
 select
   author,
@@ -79,14 +79,12 @@ select
     select ${pick("stacks")}
     from generate_series(1, 1 + floor(random() * 4)::int + (i * 0))
   ),
-  (i % 20 <> 0),
   ${pick("bgs")},
   ${pick("fgs")},
   now() - interval '1 year' - make_interval(mins => i)
 from rows;
 
-select count(*) as seeded,
-       count(*) filter (where is_public) as public_seeded
+select count(*) as seeded
 from public.graves
 where author_id = (select id from auth.users where email = ${sqlText(SEED_EMAIL)});
 `;

@@ -61,7 +61,6 @@ describe("GraveForm", () => {
           died: "2024-02-01",
           cause: "Old cause",
           tech_stack: ["React"],
-          is_public: false,
         }}
       />,
     );
@@ -69,7 +68,9 @@ describe("GraveForm", () => {
     const nameInput = screen.getByLabelText("Project name") as HTMLInputElement;
     expect(nameInput.value).toBe("Old name");
     expect(screen.getByText("React")).toBeInTheDocument();
-    expect(screen.getByLabelText(/publicly visible/i)).not.toBeChecked();
+    // Every grave is public: there is no visibility choice any more.
+    expect(screen.queryByLabelText(/publicly visible/i)).toBeNull();
+    expect(screen.queryByRole("checkbox")).toBeNull();
 
     await user.clear(nameInput);
     await user.type(nameInput, "New name");
@@ -79,8 +80,8 @@ describe("GraveForm", () => {
     expect(onSubmit.mock.calls[0][0]).toMatchObject({
       name: "New name",
       epitaph: "Old epitaph",
-      is_public: false,
     });
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty("is_public");
     expect(onSubmit.mock.calls[0][1]).toEqual(tombstone);
   });
 });

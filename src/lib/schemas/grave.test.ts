@@ -8,7 +8,6 @@ const validBase = {
   died: "2024-06-01",
   cause: "Shiny New Idea Syndrome",
   tech_stack: [],
-  is_public: true,
 };
 
 describe("graveSchema", () => {

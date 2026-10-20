@@ -2,17 +2,17 @@ import { describe, expect, it } from "vitest";
 import { decryptJson, encryptJson } from "./export-crypto.mjs";
 
 const PASS = "correct horse battery staple";
-const data = { users: [{ email: "someone@example.com" }], graves: [{ name: "Secret private grave", is_public: false }] };
+const data = { users: [{ email: "someone@example.com" }], graves: [{ name: "Secret hidden grave", hidden: true }] };
 
 describe("export encryption", () => {
   it("round-trips the data", () => {
     expect(decryptJson(encryptJson(data, PASS), PASS)).toEqual(data);
   });
 
-  it("never writes the plaintext (emails, private grave names) into the file", () => {
+  it("never writes the plaintext (emails, hidden grave names) into the file", () => {
     const file = encryptJson(data, PASS).toString("latin1");
     expect(file).not.toContain("someone@example.com");
-    expect(file).not.toContain("Secret private grave");
+    expect(file).not.toContain("Secret hidden grave");
   });
 
   it("uses a fresh salt and IV every time", () => {

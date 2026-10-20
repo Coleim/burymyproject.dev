@@ -40,7 +40,6 @@ export function GraveForm({
     resolver: zodResolver(graveSchema),
     defaultValues: {
       tech_stack: [],
-      is_public: true,
       ...defaultValues,
     },
   });
@@ -257,11 +256,6 @@ export function GraveForm({
             {errors.project_url.message}
           </span>
         )}
-      </div>
-
-      <div className={styles["checkbox-field"]}>
-        <input id="is_public" type="checkbox" {...register("is_public")} />
-        <label htmlFor="is_public">Make this grave publicly visible</label>
       </div>
 
       </form>

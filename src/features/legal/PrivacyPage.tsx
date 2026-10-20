@@ -41,9 +41,9 @@ export function PrivacyPage() {
                   <strong>Grave content</strong>: anything you choose to
                   submit when creating a grave — project name, epitaph,
                   description, dates, cause of death, tech stack, and an
-                  optional link to the project. Graves
-                  marked "public" are visible to anyone with the link or
-                  browsing the global cemetery.
+                  optional link to the project. Every
+                  grave is public: it is visible to anyone with the link and in
+                  the global cemetery.
                 </li>
               </ul>
               <p>We do not collect payment information or phone numbers.</p>
@@ -62,8 +62,7 @@ export function PrivacyPage() {
                 >
                   Supabase
                 </a>
-                , protected by row-level security policies so that private
-                graves are only visible to their author. Your session is kept
+                , protected by row-level security policies. Your session is kept
                 in your browser's local storage — we don't use third-party
                 tracking cookies.
               </p>
