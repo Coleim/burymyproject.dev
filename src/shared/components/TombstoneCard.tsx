@@ -48,12 +48,16 @@ export function TombstoneCard({
       <img
         src={bgUrl}
         alt=""
+        loading={featured ? "eager" : "lazy"}
+        decoding="async"
         className={styles["grave-bg"]}
         onLoad={() => setLoaded(true)}
       />
       <img
         src={fgUrl}
         alt=""
+        loading={featured ? "eager" : "lazy"}
+        decoding="async"
         className={styles["grave-fg"]}
       />
       <div className={styles["tombstone-overlay"]}>

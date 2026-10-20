@@ -34,7 +34,8 @@ export default defineConfig({
       timeout: 30_000,
     },
     {
-      command: `npm run build && npx vite preview --port ${PREVIEW_PORT} --strictPort`,
+      // No sitemap step: it would page through the real database on every run.
+      command: `npx tsc -b && npx vite build && npx vite preview --port ${PREVIEW_PORT} --strictPort`,
       url: previewURL,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,

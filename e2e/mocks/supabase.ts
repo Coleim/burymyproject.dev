@@ -204,7 +204,7 @@ function likeToRegExp(pattern: string) {
 export async function mockPaginatedGraves(
   page: Page,
   all: MockGrave[],
-  options: { failOffsets?: number[] } = {},
+  options: { failOffsets?: number[]; delay?: { ms: number } } = {},
 ) {
   const failures = new Set(options.failOffsets ?? []);
   await mockHomeStats(page, homeStatsFor(all));
@@ -213,6 +213,7 @@ export async function mockPaginatedGraves(
       await route.fallback();
       return;
     }
+    if (options.delay?.ms) await new Promise((r) => setTimeout(r, options.delay!.ms));
     const url = new URL(route.request().url());
     const offset = Number(url.searchParams.get("offset") ?? 0);
     const limit = Number(url.searchParams.get("limit") ?? all.length);

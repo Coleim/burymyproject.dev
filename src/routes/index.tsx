@@ -5,6 +5,7 @@ import { CemeteryPage } from "@/features/graveyard/CemeteryPage";
 import { LandingPage } from "@/features/landing/LandingPage";
 import { NotFoundPage } from "@/shared/components/NotFoundPage";
 import { RouteFallback } from "@/shared/components/RouteFallback";
+import { ScrollToTop } from "@/shared/components/ScrollToTop";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
@@ -41,6 +42,7 @@ export function AppRouter() {
   return (
     <AuthProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <ScrollToTop />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />

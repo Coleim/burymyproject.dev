@@ -13,7 +13,8 @@
     "test:e2e": "playwright test",
     "test:rls": "node scripts/rls-integration-test.mjs",
     "seed": "node scripts/seed-graves.mjs",
-    "seed:remove": "node scripts/unseed-graves.mjs"
+    "seed:remove": "node scripts/unseed-graves.mjs",
+    "test:e2e:cross-browser": "playwright test -c playwright.cross-browser.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.2",

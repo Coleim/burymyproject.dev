@@ -180,3 +180,10 @@
   display: flex;
   flex-direction: column;
 }
+
+/* Long lists: skip rendering the cards that are far off-screen. The size hint
+   (a card is 210px wide, 2:3) keeps the scrollbar stable. */
+.grid > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 210px auto 315px;
+}
