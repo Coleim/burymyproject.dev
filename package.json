@@ -15,7 +15,9 @@
     "seed": "node scripts/seed-graves.mjs",
     "seed:remove": "node scripts/unseed-graves.mjs",
     "test:e2e:cross-browser": "playwright test -c playwright.cross-browser.config.ts",
-    "moderate": "node scripts/moderate-grave.mjs"
+    "moderate": "node scripts/moderate-grave.mjs",
+    "export": "node scripts/export-data.mjs",
+    "export:decrypt": "node scripts/decrypt-export.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.2",

@@ -1,0 +1,53 @@
+name: Backup data
+
+# The Supabase Free plan has no automatic backups. This exports all graves and
+# users to an ENCRYPTED file (the repository is public, and so are its workflow
+# artifacts: an unencrypted export would leak emails and private graves).
+#
+# It stays dormant until the repository secret BACKUP_PASSPHRASE (at least 12
+# characters) exists. Keep that passphrase somewhere safe: without it the
+# backups cannot be read. Restore notes: see PLAN.MD ("Sauvegarde").
+
+on:
+  schedule:
+    - cron: "17 3 * * 0" # Sundays, 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - name: Check the passphrase secret exists
+        id: gate
+        run: |
+          if [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::notice::BACKUP_PASSPHRASE is not set, so no backup was made. Add it under Settings > Secrets and variables > Actions to enable weekly backups."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.enabled == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        if: steps.gate.outputs.enabled == 'true'
+      - run: npm run export -- --out backup.bmpx
+        if: steps.gate.outputs.enabled == 'true'
+      - uses: actions/upload-artifact@v4
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          name: backup-${{ github.run_id }}
+          path: backup.bmpx
+          retention-days: 30
+          if-no-files-found: error
