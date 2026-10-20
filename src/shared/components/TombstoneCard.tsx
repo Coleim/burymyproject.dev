@@ -102,11 +102,16 @@ export function TombstoneCard({
       <Link
         to={`/graves/${slug}`}
         className={`${className} ${styles["tombstone-link"]}`}
+        data-founding={foundingRank ? "" : undefined}
       >
         {content}
       </Link>
     );
   }
 
-  return <div className={className}>{content}</div>;
+  return (
+    <div className={className} data-founding={foundingRank ? "" : undefined}>
+      {content}
+    </div>
+  );
 }

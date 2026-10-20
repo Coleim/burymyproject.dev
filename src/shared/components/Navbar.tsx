@@ -27,6 +27,12 @@ export function Navbar() {
     main?.scrollIntoView();
   }
 
+  const cemeteryLink = (
+    <LinkButton to="/cemetery" variant="secondary">
+      Cemetery
+    </LinkButton>
+  );
+
   return (
     <>
       <a
@@ -76,9 +82,7 @@ export function Navbar() {
               <LinkButton to="/my-graves" variant="secondary">
                 My Graveyard
               </LinkButton>
-              <LinkButton to="/cemetery" variant="secondary">
-                Cemetery
-              </LinkButton>
+              {cemeteryLink}
               <Button
                 variant="accent"
                 onClick={handleLogout}
@@ -89,6 +93,7 @@ export function Navbar() {
             </>
           ) : EMAIL_AUTH_ENABLED ? (
             <>
+              {cemeteryLink}
               <LinkButton to="/login" variant="secondary">
                 Log In
               </LinkButton>
@@ -97,9 +102,12 @@ export function Navbar() {
               </LinkButton>
             </>
           ) : (
-            <LinkButton to="/login" variant="accent">
-              Sign in
-            </LinkButton>
+            <>
+              {cemeteryLink}
+              <LinkButton to="/login" variant="accent">
+                Sign in
+              </LinkButton>
+            </>
           )}
         </div>
       </nav>

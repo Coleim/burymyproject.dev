@@ -182,8 +182,10 @@
 }
 
 /* Long lists: skip rendering the cards that are far off-screen. The size hint
-   (a card is 210px wide, 2:3) keeps the scrollbar stable. */
-.grid > * {
+   (a card is 210px wide, 2:3) keeps the scrollbar stable. Golden cards are
+   skipped: content-visibility implies paint containment, which would clip
+   their glow into a visible rectangle. */
+.grid > *:not([data-founding]) {
   content-visibility: auto;
   contain-intrinsic-size: auto 210px auto 315px;
 }

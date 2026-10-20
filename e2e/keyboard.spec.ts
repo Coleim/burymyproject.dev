@@ -1,8 +1,14 @@
 import { expect, test } from "@playwright/test";
-import { makeGrave, makeManyGraves, mockPaginatedGraves } from "./mocks/supabase";
+import {
+  makeGrave,
+  makeManyGraves,
+  mockPaginatedGraves,
+} from "./mocks/supabase";
 
 test.describe("Keyboard navigation", () => {
-  test("the skip link is the first tab stop and moves focus to the main content", async ({ page }) => {
+  test("the skip link is the first tab stop and moves focus to the main content", async ({
+    page,
+  }) => {
     await mockPaginatedGraves(page, makeManyGraves(3));
     await page.goto("cemetery");
 
@@ -15,9 +21,23 @@ test.describe("Keyboard navigation", () => {
     await expect(page.locator("main#main-content")).toBeFocused();
   });
 
-  test("every page has exactly one main landmark and one h1", async ({ page }) => {
-    await mockPaginatedGraves(page, [makeGrave({ public_slug: "kb-1" }), ...makeManyGraves(2)]);
-    for (const path of ["", "cemetery", "graves/kb-1", "login", "signup", "privacy", "terms", "nope"]) {
+  test("every page has exactly one main landmark and one h1", async ({
+    page,
+  }) => {
+    await mockPaginatedGraves(page, [
+      makeGrave({ public_slug: "kb-1" }),
+      ...makeManyGraves(2),
+    ]);
+    for (const path of [
+      "",
+      "cemetery",
+      "graves/kb-1",
+      "login",
+      "signup",
+      "privacy",
+      "terms",
+      "nope",
+    ]) {
       await page.goto(path);
       await expect(page.locator("main")).toHaveCount(1);
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
@@ -40,9 +60,16 @@ test.describe("Keyboard navigation", () => {
           const visible =
             (cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0) ||
             cs.boxShadow !== "none";
-          return { visible, name: el.getAttribute("aria-label") || el.innerText.slice(0, 30) };
+          return {
+            visible,
+            name: el.getAttribute("aria-label") || el.innerText.slice(0, 30),
+          };
         });
-        if (state) expect(state.visible, `${path || "/"}: "${state.name}" has no focus indicator`).toBe(true);
+        if (state)
+          expect(
+            state.visible,
+            `${path || "/"}: "${state.name}" has no focus indicator`,
+          ).toBe(true);
       }
     }
   });
@@ -50,7 +77,9 @@ test.describe("Keyboard navigation", () => {
   test.describe("mobile menu", () => {
     test.use({ viewport: { width: 375, height: 812 } });
 
-    test("opens with the keyboard, and Escape closes it and returns focus to the toggle", async ({ page }) => {
+    test("opens with the keyboard, and Escape closes it and returns focus to the toggle", async ({
+      page,
+    }) => {
       await mockPaginatedGraves(page, []);
       await page.goto("");
 
@@ -61,12 +90,17 @@ test.describe("Keyboard navigation", () => {
       await expect(toggle).toBeFocused();
 
       await page.keyboard.press("Enter");
-      await expect(page.getByRole("button", { name: "Close menu" })).toHaveAttribute("aria-expanded", "true");
+      await expect(
+        page.getByRole("button", { name: "Close menu" }),
+      ).toHaveAttribute("aria-expanded", "true");
+      await page.keyboard.press("Tab");
       await page.keyboard.press("Tab");
       await expect(page.getByRole("link", { name: /^log in$/i })).toBeFocused();
 
       await page.keyboard.press("Escape");
-      await expect(page.getByRole("button", { name: "Open menu" })).toBeFocused();
+      await expect(
+        page.getByRole("button", { name: "Open menu" }),
+      ).toBeFocused();
       await expect(page.getByRole("link", { name: /^log in$/i })).toBeHidden();
     });
   });
