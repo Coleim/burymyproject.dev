@@ -17,7 +17,7 @@ test.describe("Cemetery pagination", () => {
     await expect(page.getByRole("heading", { name: "Project 0048" })).toBeVisible();
 
     // No duplicates after loading a second page.
-    const names = await page.getByRole("heading", { level: 4 }).allInnerTexts();
+    const names = await page.getByRole("heading", { level: 2 }).allInnerTexts();
     expect(names).toHaveLength(48);
     expect(new Set(names).size).toBe(48);
   });

@@ -1,3 +1,4 @@
+import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
 import styles from "./AuthLayout.module.css";
 
@@ -12,13 +13,13 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
     <div className={styles.content}>
       <div className={styles.inner}>
         <Navbar />
-        <div className={styles.wrapper}>
+        <Main className={styles.wrapper}>
           <div className={styles.card}>
             <h1 className={styles.title}>{title}</h1>
             <p className={styles.subtitle}>{subtitle}</p>
             {children}
           </div>
-        </div>
+        </Main>
       </div>
     </div>
   );

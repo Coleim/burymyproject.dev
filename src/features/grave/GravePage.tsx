@@ -1,4 +1,5 @@
 import { useAuth } from "@/features/auth/useAuth";
+import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { TombstoneCardSkeleton } from "@/shared/components/TombstoneCardSkeleton";
@@ -64,7 +65,7 @@ export function GravePage() {
         <Navbar />
 
         {status === "loading" && (
-          <div className={styles.wrapper}>
+          <Main className={styles.wrapper}>
             <TombstoneCardSkeleton />
             <div className={styles.details}>
               <div className={styles["skeleton-line"]} />
@@ -72,19 +73,19 @@ export function GravePage() {
                 className={`${styles["skeleton-line"]} ${styles["skeleton-line--short"]}`}
               />
             </div>
-          </div>
+          </Main>
         )}
 
         {status === "not-found" && (
-          <div className={styles.state}>
+          <Main className={styles.state}>
             <h1 className={styles["state-title"]}>This grave doesn't exist...</h1>
             <p>... or never did. 🪦</p>
             <LinkButton to="/">Back home</LinkButton>
-          </div>
+          </Main>
         )}
 
         {status === "found" && grave && (
-          <div className={styles.wrapper}>
+          <Main className={styles.wrapper}>
             <TombstoneCard
               name={grave.name}
               startDate={grave.born}
@@ -94,6 +95,7 @@ export function GravePage() {
               bgImage={grave.tombstone_bg}
               fgImage={grave.tombstone_fg}
               featured
+              headingLevel={1}
             />
 
             <div className={styles.details}>
@@ -148,7 +150,7 @@ export function GravePage() {
                 </div>
               )}
             </div>
-          </div>
+          </Main>
         )}
       </div>
     </div>

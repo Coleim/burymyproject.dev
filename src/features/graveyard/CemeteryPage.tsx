@@ -1,5 +1,6 @@
 import { Button } from "@/shared/components/Button";
 import { LinkButton } from "@/shared/components/LinkButton";
+import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { TombstoneCardSkeleton } from "@/shared/components/TombstoneCardSkeleton";
@@ -110,101 +111,103 @@ export function CemeteryPage() {
     <div className={styles.page}>
       <div className={styles.inner}>
         <Navbar />
-        <div className={styles.header}>
-          <div className={styles.heading}>
-            <span className={styles.label}>The whole graveyard</span>
-            <h1 className={styles.title}>Cemetery</h1>
+        <Main className={styles.main}>
+          <div className={styles.header}>
+            <div className={styles.heading}>
+              <span className={styles.label}>The whole graveyard</span>
+              <h1 className={styles.title}>Cemetery</h1>
+            </div>
+            <LinkButton to="/graves/new">🪦 Bury New Project</LinkButton>
           </div>
-          <LinkButton to="/graves/new">🪦 Bury New Project</LinkButton>
-        </div>
 
-        <div className={styles["search-bar"]}>
-          <label className={styles["search-label"]} htmlFor="cemetery-search">
-            Search graves
-          </label>
-          <input
-            id="cemetery-search"
-            type="search"
-            className={styles["search-input"]}
-            placeholder="Search by project name..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            autoComplete="off"
-          />
-        </div>
-
-        {loading && (
-          <div className={styles.grid}>
-            {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-              <TombstoneCardSkeleton key={i} />
-            ))}
+          <div className={styles["search-bar"]}>
+            <label className={styles["search-label"]} htmlFor="cemetery-search">
+              Search graves
+            </label>
+            <input
+              id="cemetery-search"
+              type="search"
+              className={styles["search-input"]}
+              placeholder="Search by project name..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              autoComplete="off"
+            />
           </div>
-        )}
 
-        {!loading && graves.length === 0 && !error && term === "" && (
-          <div className={styles["empty-state"]}>
-            <p>The cemetery is still empty. Be the first to bury a project here. 🪦</p>
-          </div>
-        )}
-
-        {!loading && graves.length === 0 && !error && term !== "" && (
-          <div className={styles["empty-state"]}>
-            <p>No graves match “{term}”. Maybe it's still alive? 🪦</p>
-            <Button variant="secondary" onClick={() => setInput("")}>
-              Clear search
-            </Button>
-          </div>
-        )}
-
-        {!loading && graves.length === 0 && error && (
-          <div className={styles["empty-state"]} role="alert">
-            <p>Something went wrong while digging. Please try again in a moment.</p>
-          </div>
-        )}
-
-        {!loading && graves.length > 0 && (
-          <>
+          {loading && (
             <div className={styles.grid}>
-              {graves.map((grave) => (
-                <TombstoneCard
-                  key={grave.id}
-                  name={grave.name}
-                  startDate={grave.born}
-                  endDate={grave.died}
-                  epitaph={grave.epitaph}
-                  cause={grave.cause}
-                  bgImage={grave.tombstone_bg}
-                  fgImage={grave.tombstone_fg}
-                  slug={grave.public_slug}
-                />
+              {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                <TombstoneCardSkeleton key={i} />
               ))}
-              {loadingMore &&
-                Array.from({ length: 4 }).map((_, i) => (
-                  <TombstoneCardSkeleton key={`more-${i}`} />
-                ))}
             </div>
+          )}
 
-            <div className={styles["load-more"]}>
-              <p className={styles["load-more-count"]} aria-live="polite">
-                Showing {graves.length} of {total} graves
-              </p>
-              {error && (
-                <p className={styles["load-more-error"]} role="alert">
-                  Couldn't load more graves. Please try again.
-                </p>
-              )}
-              {hasMore && (
-                <Button
-                  variant="secondary"
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                >
-                  {loadingMore ? "Digging..." : "Load more"}
-                </Button>
-              )}
+          {!loading && graves.length === 0 && !error && term === "" && (
+            <div className={styles["empty-state"]}>
+              <p>The cemetery is still empty. Be the first to bury a project here. 🪦</p>
             </div>
-          </>
-        )}
+          )}
+
+          {!loading && graves.length === 0 && !error && term !== "" && (
+            <div className={styles["empty-state"]}>
+              <p>No graves match “{term}”. Maybe it's still alive? 🪦</p>
+              <Button variant="secondary" onClick={() => setInput("")}>
+                Clear search
+              </Button>
+            </div>
+          )}
+
+          {!loading && graves.length === 0 && error && (
+            <div className={styles["empty-state"]} role="alert">
+              <p>Something went wrong while digging. Please try again in a moment.</p>
+            </div>
+          )}
+
+          {!loading && graves.length > 0 && (
+            <>
+              <div className={styles.grid}>
+                {graves.map((grave) => (
+                  <TombstoneCard
+                    key={grave.id}
+                    name={grave.name}
+                    startDate={grave.born}
+                    endDate={grave.died}
+                    epitaph={grave.epitaph}
+                    cause={grave.cause}
+                    bgImage={grave.tombstone_bg}
+                    fgImage={grave.tombstone_fg}
+                    slug={grave.public_slug}
+                  />
+                ))}
+                {loadingMore &&
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <TombstoneCardSkeleton key={`more-${i}`} />
+                  ))}
+              </div>
+
+              <div className={styles["load-more"]}>
+                <p className={styles["load-more-count"]} aria-live="polite">
+                  Showing {graves.length} of {total} graves
+                </p>
+                {error && (
+                  <p className={styles["load-more-error"]} role="alert">
+                    Couldn't load more graves. Please try again.
+                  </p>
+                )}
+                {hasMore && (
+                  <Button
+                    variant="secondary"
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? "Digging..." : "Load more"}
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+        </Main>
       </div>
     </div>
   );

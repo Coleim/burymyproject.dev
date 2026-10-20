@@ -1,4 +1,5 @@
 import { useAuth } from "@/features/auth/useAuth";
+import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
 import { LinkButton } from "@/shared/components/LinkButton";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
@@ -38,49 +39,51 @@ export function MyGravesPage() {
     <div className={styles.page}>
       <div className={styles.inner}>
         <Navbar />
-        <div className={styles.header}>
-          <div className={styles.heading}>
-            <span className={styles.label}>Your burial grounds</span>
-            <h1 className={styles.title}>My Graveyard</h1>
+        <Main className={styles.main}>
+          <div className={styles.header}>
+            <div className={styles.heading}>
+              <span className={styles.label}>Your burial grounds</span>
+              <h1 className={styles.title}>My Graveyard</h1>
+            </div>
+            <LinkButton to="/graves/new">🪦 Bury New Project</LinkButton>
           </div>
-          <LinkButton to="/graves/new">🪦 Bury New Project</LinkButton>
-        </div>
 
-        {graves === null && (
-          <div className={styles.grid}>
-            {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-              <TombstoneCardSkeleton key={i} />
-            ))}
-          </div>
-        )}
+          {graves === null && (
+            <div className={styles.grid}>
+              {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                <TombstoneCardSkeleton key={i} />
+              ))}
+            </div>
+          )}
 
-        {graves !== null && graves.length === 0 && (
-          <div className={styles["empty-state"]}>
-            <p>
-              No projects buried here... yet. Are all your projects still
-              alive? 🪦
-            </p>
-            <LinkButton to="/graves/new">Bury a project</LinkButton>
-          </div>
-        )}
+          {graves !== null && graves.length === 0 && (
+            <div className={styles["empty-state"]}>
+              <p>
+                No projects buried here... yet. Are all your projects still
+                alive? 🪦
+              </p>
+              <LinkButton to="/graves/new">Bury a project</LinkButton>
+            </div>
+          )}
 
-        {graves !== null && graves.length > 0 && (
-          <div className={styles.grid}>
-            {graves.map((grave) => (
-              <TombstoneCard
-                key={grave.id}
-                name={grave.name}
-                startDate={grave.born}
-                endDate={grave.died}
-                epitaph={grave.epitaph}
-                cause={grave.cause}
-                bgImage={grave.tombstone_bg}
-                fgImage={grave.tombstone_fg}
-                slug={grave.public_slug}
-              />
-            ))}
-          </div>
-        )}
+          {graves !== null && graves.length > 0 && (
+            <div className={styles.grid}>
+              {graves.map((grave) => (
+                <TombstoneCard
+                  key={grave.id}
+                  name={grave.name}
+                  startDate={grave.born}
+                  endDate={grave.died}
+                  epitaph={grave.epitaph}
+                  cause={grave.cause}
+                  bgImage={grave.tombstone_bg}
+                  fgImage={grave.tombstone_fg}
+                  slug={grave.public_slug}
+                />
+              ))}
+            </div>
+          )}
+        </Main>
       </div>
     </div>
   );

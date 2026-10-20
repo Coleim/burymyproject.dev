@@ -21,8 +21,8 @@
 
   /* === Text === */
   --color-text-primary: #eaeaf0;
-  --color-text-secondary: #a8a8b3;
-  --color-text-muted: #6b7280;
+  --color-text-secondary: #b8b8c3;
+  --color-text-muted: #9aa1ae;
 
   /* === Borders / subtle UI === */
   --color-border: rgba(255, 255, 255, 0.08);
@@ -57,3 +57,18 @@ body {
 /* var(--font-display) */
 /* p, nav links, buttons, body text   → var(--font-body) */
 /* dates, tags, stats, labels         → var(--font-mono) */
+
+main:focus {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -14,6 +14,8 @@ export type TombstoneCardProps = {
   cause?: string | null;
   slug?: string;
   featured?: boolean;
+  /** Heading level of the project name, so the page outline stays in order. */
+  headingLevel?: 1 | 2 | 3 | 4;
   /** Filename of the assigned background image, e.g. "grave_bg_03.webp".
    * If omitted, a random pairing is picked (only meant for places without
    * a persisted tombstone assignment yet, like an unsaved preview). */
@@ -30,9 +32,11 @@ export function TombstoneCard({
   cause,
   slug,
   featured,
+  headingLevel = 2,
   bgImage,
   fgImage,
 }: TombstoneCardProps) {
+  const Heading = `h${headingLevel}` as const;
   const [loaded, setLoaded] = useState(false);
   const pair =
     bgImage && fgImage ? { bg: bgImage, fg: fgImage } : pickRandomGravePair();
@@ -49,7 +53,7 @@ export function TombstoneCard({
       />
       <img
         src={fgUrl}
-        alt={`Grave of ${name}`}
+        alt=""
         className={styles["grave-fg"]}
       />
       <div className={styles["tombstone-overlay"]}>
@@ -63,7 +67,7 @@ export function TombstoneCard({
           )}
         </div>
         <div className={styles["tombstone-center"]}>
-          <h4 className={styles["tombstone-name"]}>{name}</h4>
+          <Heading className={styles["tombstone-name"]}>{name}</Heading>
           {epitaph && (
             <p className={styles["tombstone-epitaph"]}>"{epitaph}"</p>
           )}
@@ -72,14 +76,15 @@ export function TombstoneCard({
     </div>
   );
 
-  const className = `${styles["tombstone"]} ${featured ? styles["tombstone--featured"] : ""}`;
+  const className = [styles["tombstone"], featured && styles["tombstone--featured"]]
+    .filter(Boolean)
+    .join(" ");
 
   if (slug) {
     return (
       <Link
         to={`/graves/${slug}`}
         className={`${className} ${styles["tombstone-link"]}`}
-        aria-label={`View the grave of ${name}`}
       >
         {content}
       </Link>

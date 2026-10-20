@@ -125,11 +125,12 @@
 
 .footer-link a {
   color: var(--color-accent-warm);
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .footer-link a:hover {
-  text-decoration: underline;
+  text-decoration-thickness: 2px;
 }
 
 .divider {

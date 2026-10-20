@@ -1,5 +1,6 @@
 import logo from "@/assets/grave-logo.png";
 import { LinkButton } from "@/shared/components/LinkButton";
+import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { supabase } from "@/lib/supabase";
@@ -73,119 +74,122 @@ export function LandingPage() {
     <div className={styles.content}>
       <div className={styles.inner}>
         <Navbar />
-        <Hero />
-        <div className={styles["social-proof"]}>
-          {stats ? (
-            <>
-              <div className={styles["proof-item"]}>
-                <span className={styles["proof-icon"]}>⚰️</span>
-                <span
-                  className={styles["proof-value"]}
-                  data-testid="stat-total-graves"
-                >
-                  {stats.totalGraves.toLocaleString()}
-                </span>
-                <span className={styles["proof-label"]}>projects buried</span>
-              </div>
+        <Main>
+          <Hero />
+          <div className={styles["social-proof"]}>
+            {stats ? (
+              <>
+                <div className={styles["proof-item"]}>
+                  <span className={styles["proof-icon"]}>⚰️</span>
+                  <span
+                    className={styles["proof-value"]}
+                    data-testid="stat-total-graves"
+                  >
+                    {stats.totalGraves.toLocaleString()}
+                  </span>
+                  <span className={styles["proof-label"]}>projects buried</span>
+                </div>
 
-              <span className={styles["proof-divider"]}>✦</span>
+                <span className={styles["proof-divider"]}>✦</span>
 
-              <div className={styles["proof-item"]}>
-                <span className={styles["proof-icon"]}>💀</span>
-                <span
-                  className={styles["proof-value"]}
-                  data-testid="stat-developers"
-                >
-                  {stats.developers.toLocaleString()}
-                </span>
-                <span className={styles["proof-label"]}>developers</span>
-              </div>
+                <div className={styles["proof-item"]}>
+                  <span className={styles["proof-icon"]}>💀</span>
+                  <span
+                    className={styles["proof-value"]}
+                    data-testid="stat-developers"
+                  >
+                    {stats.developers.toLocaleString()}
+                  </span>
+                  <span className={styles["proof-label"]}>developers</span>
+                </div>
 
-              {stats.topCause && (
-                <>
-                  <span className={styles["proof-divider"]}>✦</span>
+                {stats.topCause && (
+                  <>
+                    <span className={styles["proof-divider"]}>✦</span>
 
-                  <div className={styles["proof-item"]}>
-                    <span className={styles["proof-icon"]}>☠️</span>
-                    <span className={styles["proof-label"]}>
-                      Most common cause of death:
-                    </span>
-                    <span
-                      className={styles["proof-highlight"]}
-                      data-testid="stat-top-cause"
-                    >
-                      {stats.topCause}
-                    </span>
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <div className={styles["proof-item"]}>
-                <span className={styles["proof-skeleton"]} />
-              </div>
-              <span className={styles["proof-divider"]}>✦</span>
-              <div className={styles["proof-item"]}>
-                <span className={styles["proof-skeleton"]} />
-              </div>
-              <span className={styles["proof-divider"]}>✦</span>
-              <div className={styles["proof-item"]}>
-                <span
-                  className={`${styles["proof-skeleton"]} ${styles["proof-skeleton--wide"]}`}
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className={styles["preview"]}>
-          <div className={styles["preview-header"]}>
-            <h2 className={styles["section-title"]}>Recently Buried</h2>
+                    <div className={styles["proof-item"]}>
+                      <span className={styles["proof-icon"]}>☠️</span>
+                      <span className={styles["proof-label"]}>
+                        Most common cause of death:
+                      </span>
+                      <span
+                        className={styles["proof-highlight"]}
+                        data-testid="stat-top-cause"
+                      >
+                        {stats.topCause}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <div className={styles["proof-item"]}>
+                  <span className={styles["proof-skeleton"]} />
+                </div>
+                <span className={styles["proof-divider"]}>✦</span>
+                <div className={styles["proof-item"]}>
+                  <span className={styles["proof-skeleton"]} />
+                </div>
+                <span className={styles["proof-divider"]}>✦</span>
+                <div className={styles["proof-item"]}>
+                  <span
+                    className={`${styles["proof-skeleton"]} ${styles["proof-skeleton--wide"]}`}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
-          {recentGraves && recentGraves.length > 0 ? (
-            <div className={styles["tombstone-grid"]}>
-              {recentGraves.map((grave, i) => (
-                <TombstoneCard
-                  key={grave.id}
-                  name={grave.name}
-                  startDate={grave.born}
-                  endDate={grave.died}
-                  epitaph={grave.epitaph}
-                  cause={grave.cause}
-                  bgImage={grave.tombstone_bg}
-                  fgImage={grave.tombstone_fg}
-                  slug={grave.public_slug}
-                  featured={i === 1}
-                />
-              ))}
+          <div className={styles["preview"]}>
+            <div className={styles["preview-header"]}>
+              <h2 className={styles["section-title"]}>Recently Buried</h2>
             </div>
-          ) : null}
 
-          <div className={styles["preview-cta"]}>
-            <LinkButton to="/cemetery" variant="secondary">
-              See the full graveyard →
-            </LinkButton>
+            {recentGraves && recentGraves.length > 0 ? (
+              <div className={styles["tombstone-grid"]}>
+                {recentGraves.map((grave, i) => (
+                  <TombstoneCard
+                    key={grave.id}
+                    name={grave.name}
+                    startDate={grave.born}
+                    endDate={grave.died}
+                    epitaph={grave.epitaph}
+                    cause={grave.cause}
+                    bgImage={grave.tombstone_bg}
+                    fgImage={grave.tombstone_fg}
+                    slug={grave.public_slug}
+                    featured={i === 1}
+                  headingLevel={3}
+                  />
+                ))}
+              </div>
+            ) : null}
+
+            <div className={styles["preview-cta"]}>
+              <LinkButton to="/cemetery" variant="secondary">
+                See the full graveyard →
+              </LinkButton>
+            </div>
           </div>
-        </div>
 
-        <section className={styles["cta-section"]}>
-          <h2 className={styles["cta-title"]}>Ready to let it go?</h2>
-          <p className={styles["cta-subtitle"]}>
-            Your side projects deserve a dignified end.
-          </p>
-          <LinkButton to="/graves/new" size="lg">
-            🪦 Dig Your First Grave{" "}
-          </LinkButton>
-        </section>
+          <section className={styles["cta-section"]}>
+            <h2 className={styles["cta-title"]}>Ready to let it go?</h2>
+            <p className={styles["cta-subtitle"]}>
+              Your side projects deserve a dignified end.
+            </p>
+            <LinkButton to="/graves/new" size="lg">
+              🪦 Dig Your First Grave{" "}
+            </LinkButton>
+          </section>
+        </Main>
 
         <footer className={styles["footer"]}>
           <div className={styles["footer-left"]}>
             <span className={styles["footer-logo"]}>
               <img
                 src={logo}
-                alt="burymyproject.dev logo"
+                alt=""
                 className={styles["footer-logo-img"]}
               />
               burymyproject.dev

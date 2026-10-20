@@ -2,6 +2,7 @@ import { useAuth } from "@/features/auth/useAuth";
 import { supabase } from "@/lib/supabase";
 import type { GraveFormValues } from "@/lib/schemas/grave";
 import { LinkButton } from "@/shared/components/LinkButton";
+import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -96,16 +97,16 @@ export function EditGravePage() {
       <div className={styles.inner}>
         <Navbar />
         {status === "loading" && (
-          <div className={styles.state} role="status">
-            <p>Digging up your grave...</p>
-          </div>
+          <Main className={styles.state}>
+            <p role="status">Digging up your grave...</p>
+          </Main>
         )}
         {status === "not-found" && (
-          <div className={styles.state}>
+          <Main className={styles.state}>
             <h1 className={styles["state-title"]}>This grave doesn't exist...</h1>
             <p>... or it isn't yours to edit. 🪦</p>
             <LinkButton to="/my-graves">Back to my graveyard</LinkButton>
-          </div>
+          </Main>
         )}
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
 import styles from "./PrivacyPage.module.css";
 import { usePageTitle } from "@/shared/lib/usePageTitle";
@@ -8,7 +9,7 @@ export function PrivacyPage() {
     <div className={styles.page}>
       <div className={styles.inner}>
         <Navbar />
-        <div className={styles.wrapper}>
+        <Main className={styles.wrapper}>
           <div className={styles.card}>
             <h1 className={styles.title}>Privacy Policy</h1>
             <p className={styles.updated}>Last updated: October 2026</p>
@@ -29,13 +30,15 @@ export function PrivacyPage() {
               <ul>
                 <li>
                   <strong>Account data</strong>: your email address and
-                  password (or your Google account identifier, if you sign in
-                  with Google), managed by Supabase Auth.
+                  password (or your Google or GitHub account identifier and
+                  email, if you sign in with one of them), managed by Supabase
+                  Auth.
                 </li>
                 <li>
                   <strong>Grave content</strong>: anything you choose to
                   submit when creating a grave — project name, epitaph,
-                  description, dates, cause of death, and tech stack. Graves
+                  description, dates, cause of death, tech stack, and an
+                  optional link to the project. Graves
                   marked "public" are visible to anyone with the link or
                   browsing the global cemetery.
                 </li>
@@ -66,11 +69,14 @@ export function PrivacyPage() {
             <div className={styles.section}>
               <h2 className={styles["section-title"]}>Third parties</h2>
               <p>
-                We rely on two third-party services to run this app:{" "}
-                <strong>Supabase</strong> (authentication and database) and,
-                if you choose to sign in that way, <strong>Google</strong>{" "}
-                (OAuth sign-in). Neither is used for advertising or analytics.
-                We currently don't use any analytics or tracking tools.
+                We rely on a few third-party services to run this app:{" "}
+                <strong>Supabase</strong> (authentication and database),{" "}
+                <strong>Google</strong> or <strong>GitHub</strong> if you
+                choose to sign in with them (OAuth sign-in), and{" "}
+                <strong>Google Fonts</strong>, which serves the site's fonts
+                and therefore receives your IP address when a page loads.
+                None of them is used for advertising or analytics. We
+                currently don't use any analytics or tracking tools.
               </p>
             </div>
 
@@ -95,7 +101,7 @@ export function PrivacyPage() {
               </p>
             </div>
           </div>
-        </div>
+        </Main>
       </div>
     </div>
   );

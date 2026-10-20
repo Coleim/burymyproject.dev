@@ -274,7 +274,7 @@ Code front en place (`OAuthButtons.tsx` (Google + GitHub, liste de providers), t
 - [x] Localisation : tout le texte UI repassé en anglais (cf. section Localisation)
 - [x] Tests unitaires (Vitest + RTL) et E2E (Playwright) — cf. section Tests locaux
 - [x] Déploiement GitHub Pages (CI + hack SPA) — cf. section GitHub Pages
-- [ ] Vérification a11y approfondie (contraste réel mesuré, navigation clavier complète sur tous les composants interactifs)
+- [x] Vérification a11y approfondie (contraste réel mesuré, navigation clavier : skip link, ordre de tab, indicateurs de focus, menu mobile)
 - [ ] Responsive fin sur petits écrans (fait : bouton de création après la preview sur mobile, menu hamburger dans la Navbar ; reste à re-tester composant par composant)
 - [ ] Métadonnées Open Graph dynamiques par tombe (voir Scaling, Phase 2)
 - [ ] Headers de sécurité (`X-Frame-Options`, etc.) — à ajouter en meta tags ou via un futur hébergeur supportant les headers custom (GitHub Pages ne permet pas de headers custom nativement)
@@ -352,7 +352,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (36 tests, 9 fichiers) :
+- Couverture actuelle (50 tests, 12 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion
@@ -393,7 +393,7 @@ Découpage convenu pour la suite, auth/Google OAuth/fiabilité email expliciteme
 
 - [x] **Vague A — Qualité & revue de code** : DRY du CSS fond/overlay (7 fichiers → `composes`), bug d'asset Vite détecté et corrigé au passage. Skeletons de chargement + suppression déplacée vers la page de détail (demandes complémentaires traitées dans la foulée).
 - [x] **Vague B — SEO & partage social** : meta description/canonical/Open Graph/Twitter dans `index.html` (landing) + image de partage 1200×630 (`public/og-image.jpg`), `document.title` par page (`usePageTitle`, ex. « DevFlow — RIP · burymyproject.dev »), `public/robots.txt`, `dist/sitemap.xml` généré au build (`scripts/generate-sitemap.mjs`, pages statiques + toutes les tombes publiques, pagination > 1000 testée sur 2500 tombes seedées). **Limites documentées** : (1) les aperçus OG par tombe nécessitent du SSR/edge (les bots n'exécutent pas le JS) ; (2) `robots.txt` n'est lu qu'à la racine d'un domaine — sans domaine custom, il est ignoré sur `coleim.github.io/burymyproject.dev/` (soumettre le sitemap dans Google Search Console) ; (3) GitHub Pages répond 404 sur les deep links avant le hack SPA, ce qui peut gêner l'indexation des pages `/graves/:slug`.
-- [ ] **Vague C — a11y & responsive** : audit clavier/contraste, passage responsive mobile/tablette
+- [x] **Vague C — a11y & responsive** : audit axe automatisé (WCAG 2.0/2.1 A+AA + best-practice) sur 10 pages × desktop/mobile, devenu test de non-régression (`e2e/a11y.spec.ts`). Corrigé : liens de cartes dont le nom accessible ne contenait pas le texte visible (WCAG 2.5.3), liens dans du texte distingués par la seule couleur (soulignés), classe CSS `undefined` sur les cartes « featured », absence de landmark `<main>` (composant `Main`) + lien « Skip to main content », ordre des titres (`headingLevel` sur `TombstoneCard`, `<h1>` sur la page d'une tombe), `prefers-reduced-motion`, alt du logo redondant, retour du focus sur le bouton du menu après Échap. **Contraste** : axe ne peut PAS le vérifier ici (fonds en pseudo-éléments/images → « incomplete »), donc mesuré à la main en échantillonnant les pixels réels derrière chaque texte (5 largeurs 320→1280, 12 pages) : `--color-text-muted` #6b7280 → #9aa1ae (ratios 2,9–4,05 → ≥ 4,5) et `--color-text-secondary` #a8a8b3 → #b8b8c3. Responsive : aucun scroll horizontal de 320 à 1440 px (`e2e/responsive.spec.ts`) ; bug corrigé : titre du hero fixe à 80 px débordait à 320 px (désormais `clamp`). Politique de confidentialité mise à jour (GitHub, lien projet, Google Fonts).
 - [ ] **Vague D — Monitoring & analytics** : Sentry (erreurs front) + Plausible/Umami (analytics) — nécessite la création de comptes externes par l'utilisateur
 - [x] **Vague E — Scaling léger** : pagination sur `/cemetery` faite (perf validée sur 4000 lignes réelles, cf. Tests de charge ; index `pg_trgm` à ajouter seulement si la recherche devient lente à plus grande échelle)
 - [ ] **Vague F — Sécurité** : revue RLS, `npm audit`, checklist OWASP basique (pentest externe hors de portée d'un agent IA) ; headers de sécurité impossibles nativement sur GitHub Pages (limitation documentée, cf. Sécurité)
