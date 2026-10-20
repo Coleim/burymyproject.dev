@@ -12,6 +12,7 @@ export type Database = {
           died: string | null;
           cause: string | null;
           tech_stack: string[];
+          project_url: string | null;
           public_slug: string;
           is_public: boolean;
           tombstone_bg: string;
@@ -29,6 +30,7 @@ export type Database = {
           died?: string | null;
           cause?: string | null;
           tech_stack?: string[];
+          project_url?: string | null;
           public_slug?: string;
           is_public?: boolean;
           tombstone_bg: string;
@@ -46,6 +48,7 @@ export type Database = {
           died?: string | null;
           cause?: string | null;
           tech_stack?: string[];
+          project_url?: string | null;
           public_slug?: string;
           is_public?: boolean;
           tombstone_bg?: string;

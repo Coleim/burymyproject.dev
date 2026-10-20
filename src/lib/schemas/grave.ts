@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+function isHttpUrl(value: string) {
+  if (value === "") return true;
+  try {
+    const { protocol } = new URL(value);
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export const graveSchema = z
   .object({
     name: z.string().min(1, "Project name is required").max(100),
@@ -9,6 +19,13 @@ export const graveSchema = z
     died: z.string().min(1, "Date of death is required"),
     cause: z.string().min(1, "Cause of death is required").max(200),
     tech_stack: z.array(z.string().max(50)).max(20),
+    project_url: z
+      .string()
+      .trim()
+      .max(500, "Link is too long")
+      .refine(isHttpUrl, "Enter a valid link starting with http:// or https://")
+      .optional()
+      .or(z.literal("")),
     is_public: z.boolean(),
   })
   .refine(

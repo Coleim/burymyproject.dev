@@ -102,6 +102,17 @@ export function GravePage() {
                 </div>
               )}
 
+              {grave.project_url && /^https?:\/\//i.test(grave.project_url) && (
+                <a
+                  className={styles["project-link"]}
+                  href={grave.project_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Visit the project's remains ↗
+                </a>
+              )}
+
               <div className={styles.meta}>
                 <span>
                   Buried on{" "}
@@ -111,6 +122,12 @@ export function GravePage() {
 
               {user?.id === grave.author_id && (
                 <div className={styles.actions}>
+                  <LinkButton
+                    to={`/graves/${grave.public_slug}/edit`}
+                    variant="secondary"
+                  >
+                    Edit this grave
+                  </LinkButton>
                   <button
                     type="button"
                     className={styles["delete-button"]}

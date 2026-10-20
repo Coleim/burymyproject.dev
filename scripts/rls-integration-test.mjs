@@ -185,6 +185,29 @@ try {
       !updateError && (updateResult?.length ?? 0) === 0,
       updateError?.message ?? `rows updated: ${updateResult?.length}`,
     );
+
+    // --- Author editing (Edit grave feature) ---
+    const { data: ownUpdate, error: ownUpdateError } = await clientA
+      .from("graves")
+      .update({ epitaph: "Edited by its author." })
+      .eq("id", publicGrave.id)
+      .select("*");
+    check(
+      "User A CAN update their own grave",
+      !ownUpdateError && ownUpdate?.[0]?.epitaph === "Edited by its author.",
+      ownUpdateError?.message,
+    );
+
+    const { data: reassign } = await clientA
+      .from("graves")
+      .update({ author_id: userBId })
+      .eq("id", publicGrave.id)
+      .select("*");
+    check(
+      "User A CANNOT hand their grave over to another author_id (RLS with check)",
+      (reassign?.length ?? 0) === 0,
+      `rows updated: ${reassign?.length}`,
+    );
   }
 } finally {
   // --- Cleanup: always runs, even if an assertion threw ---

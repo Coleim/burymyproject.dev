@@ -79,7 +79,10 @@
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
+  gap: 0.75rem;
 }
 
 .delete-button {
@@ -143,4 +146,28 @@
   font-family: var(--font-display, "Cinzel", serif);
   font-size: 2rem;
   color: var(--color-text-primary);
+}
+
+.project-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-accent-warm);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
+
+.project-link:hover {
+  color: var(--color-text-primary);
+}
+
+.project-link:focus-visible {
+  outline: 2px solid var(--color-accent-warm);
+  outline-offset: 2px;
 }

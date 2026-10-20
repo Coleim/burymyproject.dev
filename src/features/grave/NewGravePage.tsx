@@ -1,11 +1,11 @@
 import { useAuth } from "@/features/auth/useAuth";
-import { Navbar } from "@/shared/components/Navbar";
 import { supabase } from "@/lib/supabase";
 import type { GraveFormValues } from "@/lib/schemas/grave";
 import type { GravePair } from "@/shared/lib/randomGrave";
 import { useNavigate } from "react-router-dom";
 import { GraveForm } from "./GraveForm";
-import styles from "./GraveForm.module.css";
+import { GraveFormShell } from "./GraveFormShell";
+import { toGraveRow } from "./graveRow";
 
 export function NewGravePage() {
   const { user } = useAuth();
@@ -17,15 +17,8 @@ export function NewGravePage() {
     const { data, error } = await supabase
       .from("graves")
       .insert({
+        ...toGraveRow(values),
         author_id: user.id,
-        name: values.name,
-        description: values.description || null,
-        epitaph: values.epitaph || null,
-        born: values.born || null,
-        died: values.died || null,
-        cause: values.cause || null,
-        tech_stack: values.tech_stack,
-        is_public: values.is_public,
         tombstone_bg: tombstone.bg,
         tombstone_fg: tombstone.fg,
       })
@@ -40,19 +33,11 @@ export function NewGravePage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.inner}>
-        <Navbar />
-        <div className={styles.wrapper}>
-          <div className={styles.card}>
-            <h1 className={styles.title}>Dig a new grave</h1>
-            <p className={styles.subtitle}>
-              Give your abandoned project the send-off it deserves.
-            </p>
-            <GraveForm onSubmit={handleSubmit} />
-          </div>
-        </div>
-      </div>
-    </div>
+    <GraveFormShell
+      title="Dig a new grave"
+      subtitle="Give your abandoned project the send-off it deserves."
+    >
+      <GraveForm onSubmit={handleSubmit} />
+    </GraveFormShell>
   );
 }

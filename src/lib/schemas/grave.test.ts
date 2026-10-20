@@ -66,4 +66,33 @@ describe("graveSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  describe("project_url", () => {
+    it("is optional and accepts an empty string", () => {
+      expect(graveSchema.safeParse(validBase).success).toBe(true);
+      expect(graveSchema.safeParse({ ...validBase, project_url: "" }).success).toBe(true);
+    });
+
+    it.each(["https://github.com/me/project", "http://example.com/a?b=1"])(
+      "accepts %s",
+      (project_url) => {
+        expect(graveSchema.safeParse({ ...validBase, project_url }).success).toBe(true);
+      },
+    );
+
+    it.each([
+      "javascript:alert(1)",
+      "data:text/html,<script>alert(1)</script>",
+      "ftp://example.com/file",
+      "github.com/me/project",
+      "not a url",
+    ])("rejects %s", (project_url) => {
+      expect(graveSchema.safeParse({ ...validBase, project_url }).success).toBe(false);
+    });
+
+    it("rejects links longer than 500 characters", () => {
+      const project_url = `https://example.com/${"a".repeat(500)}`;
+      expect(graveSchema.safeParse({ ...validBase, project_url }).success).toBe(false);
+    });
+  });
 });

@@ -2,6 +2,7 @@ import { AuthProvider } from "@/features/auth/AuthProvider";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { ProtectedRoute } from "@/features/auth/ProtectedRoute";
 import { SignUpPage } from "@/features/auth/SignUpPage";
+import { EditGravePage } from "@/features/grave/EditGravePage";
 import { GravePage } from "@/features/grave/GravePage";
 import { NewGravePage } from "@/features/grave/NewGravePage";
 import { CemeteryPage } from "@/features/graveyard/CemeteryPage";
@@ -27,6 +28,14 @@ export function AppRouter() {
             element={
               <ProtectedRoute>
                 <NewGravePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/graves/:slug/edit"
+            element={
+              <ProtectedRoute>
+                <EditGravePage />
               </ProtectedRoute>
             }
           />

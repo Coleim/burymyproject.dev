@@ -13,14 +13,20 @@ type GraveFormProps = {
   onSubmit: (values: GraveFormValues, tombstone: GravePair) => Promise<void>;
   submitLabel?: string;
   submittingLabel?: string;
+  defaultValues?: Partial<GraveFormValues>;
+  tombstone?: GravePair;
 };
 
 export function GraveForm({
   onSubmit,
   submitLabel = "Bury the project",
   submittingLabel = "Burying in progress...",
+  defaultValues,
+  tombstone: initialTombstone,
 }: GraveFormProps) {
-  const [tombstone] = useState<GravePair>(() => pickRandomGravePair());
+  const [tombstone] = useState<GravePair>(
+    () => initialTombstone ?? pickRandomGravePair(),
+  );
 
   const {
     register,
@@ -35,6 +41,7 @@ export function GraveForm({
     defaultValues: {
       tech_stack: [],
       is_public: true,
+      ...defaultValues,
     },
   });
 
@@ -52,7 +59,7 @@ export function GraveForm({
 
   return (
     <div className={styles.layout}>
-      <div className={styles.preview}>
+      <div className={styles.preview} data-testid="grave-preview">
         <span className={styles["preview-label"]}>Live preview</span>
         <TombstoneCard
           name={preview.name || "Your Project"}
@@ -76,6 +83,7 @@ export function GraveForm({
       </div>
 
       <form
+        id="grave-form"
         className={styles.form}
         onSubmit={handleSubmit(handle)}
         noValidate
@@ -230,24 +238,48 @@ export function GraveForm({
         />
       </div>
 
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="project_url">
+          Project link (optional)
+        </label>
+        <input
+          id="project_url"
+          type="url"
+          inputMode="url"
+          className={`${styles.input} ${errors.project_url ? styles["input-error"] : ""}`}
+          aria-describedby={errors.project_url ? "project_url-error" : undefined}
+          aria-invalid={!!errors.project_url}
+          placeholder="https://github.com/you/your-dead-project"
+          {...register("project_url")}
+        />
+        {errors.project_url && (
+          <span id="project_url-error" className={styles["error-message"]}>
+            {errors.project_url.message}
+          </span>
+        )}
+      </div>
+
       <div className={styles["checkbox-field"]}>
         <input id="is_public" type="checkbox" {...register("is_public")} />
         <label htmlFor="is_public">Make this grave publicly visible</label>
       </div>
 
-      {errors.root && (
-        <p className={styles["form-error"]}>{errors.root.message}</p>
-      )}
-
-      <Button
-        type="submit"
-        variant="primary"
-        className={styles.submit}
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? submittingLabel : submitLabel}
-      </Button>
       </form>
+
+      <div className={styles.actions}>
+        {errors.root && (
+          <p className={styles["form-error"]}>{errors.root.message}</p>
+        )}
+        <Button
+          type="submit"
+          form="grave-form"
+          variant="primary"
+          className={styles.submit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? submittingLabel : submitLabel}
+        </Button>
+      </div>
     </div>
   );
 }
