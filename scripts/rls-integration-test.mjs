@@ -271,6 +271,20 @@ try {
       tombstone_fg: "grave_01.webp",
     });
     check("Anonymous visitor CANNOT insert a grave", !!anonInsertError);
+
+    // --- home_stats(): aggregates only, consistent with what anon can see ---
+    const { data: stats, error: statsError } = await anonClient
+      .rpc("home_stats")
+      .single();
+    const { count: visibleCount } = await anonClient
+      .from("graves")
+      .select("*", { count: "exact", head: true })
+      .eq("is_public", true);
+    check(
+      "Anonymous visitor can call home_stats() and its total matches the public graves",
+      !statsError && !!stats && stats.total_graves === visibleCount,
+      statsError?.message ?? `stats=${stats?.total_graves} visible=${visibleCount}`,
+    );
   }
 } finally {
   // --- Cleanup: always runs, even if an assertion threw ---

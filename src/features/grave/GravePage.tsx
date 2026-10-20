@@ -3,6 +3,7 @@ import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { TombstoneCardSkeleton } from "@/shared/components/TombstoneCardSkeleton";
+import { Button } from "@/shared/components/Button";
 import { LinkButton } from "@/shared/components/LinkButton";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
@@ -16,9 +17,11 @@ export function GravePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [grave, setGrave] = useState<Grave | null>(null);
-  const [status, setStatus] = useState<"loading" | "found" | "not-found">(
-    "loading",
-  );
+  const [status, setStatus] = useState<
+    "loading" | "found" | "not-found" | "error"
+  >("loading");
+  const [attempt, setAttempt] = useState(0);
+  const [deleteFailed, setDeleteFailed] = useState(false);
 
   usePageTitle(
     status === "found" && grave
@@ -37,9 +40,11 @@ export function GravePage() {
       .select("*")
       .eq("public_slug", slug)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (cancelled) return;
-        if (data) {
+        if (error) {
+          setStatus("error");
+        } else if (data) {
           setGrave(data);
           setStatus("found");
         } else {
@@ -50,12 +55,22 @@ export function GravePage() {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, attempt]);
+
+  function retry() {
+    setStatus("loading");
+    setAttempt((n) => n + 1);
+  }
 
   async function handleDelete() {
     if (!grave) return;
     if (!confirm("Permanently dig up this project?")) return;
-    await supabase.from("graves").delete().eq("id", grave.id);
+    setDeleteFailed(false);
+    const { error } = await supabase.from("graves").delete().eq("id", grave.id);
+    if (error) {
+      setDeleteFailed(true);
+      return;
+    }
     navigate("/my-graves");
   }
 
@@ -73,6 +88,16 @@ export function GravePage() {
                 className={`${styles["skeleton-line"]} ${styles["skeleton-line--short"]}`}
               />
             </div>
+          </Main>
+        )}
+
+        {status === "error" && (
+          <Main className={styles.state}>
+            <h1 className={styles["state-title"]}>Something went wrong</h1>
+            <p role="alert">
+              We couldn't dig up this grave. Please try again in a moment.
+            </p>
+            <Button onClick={retry}>Try again</Button>
           </Main>
         )}
 
@@ -147,6 +172,11 @@ export function GravePage() {
                   >
                     Delete this grave
                   </button>
+                  {deleteFailed && (
+                    <p className={styles["action-error"]} role="alert">
+                      Couldn't delete this grave. Please try again.
+                    </p>
+                  )}
                 </div>
               )}
             </div>

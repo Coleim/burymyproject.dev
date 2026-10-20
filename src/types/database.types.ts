@@ -60,7 +60,16 @@ export type Database = {
       };
     };
     Views: Record<never, never>;
-    Functions: Record<never, never>;
+    Functions: {
+      home_stats: {
+        Args: Record<never, never>;
+        Returns: {
+          total_graves: number;
+          developers: number;
+          top_cause: string | null;
+        }[];
+      };
+    };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
   };

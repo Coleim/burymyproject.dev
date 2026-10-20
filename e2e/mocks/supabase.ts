@@ -114,7 +114,37 @@ export function makeGrave(overrides: Partial<MockGrave> = {}): MockGrave {
   };
 }
 
-export function mockGravesList(page: Page, graves: MockGrave[]) {
+export function homeStatsFor(graves: MockGrave[]) {
+  const publicGraves = graves.filter((g) => g.is_public);
+  const counts = new Map<string, number>();
+  for (const g of publicGraves) {
+    if (g.cause) counts.set(g.cause, (counts.get(g.cause) ?? 0) + 1);
+  }
+  const top = [...counts.entries()].sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+  )[0];
+  return {
+    total_graves: publicGraves.length,
+    developers: new Set(publicGraves.map((g) => g.author_id)).size,
+    top_cause: top?.[0] ?? null,
+  };
+}
+
+export function mockHomeStats(
+  page: Page,
+  stats: ReturnType<typeof homeStatsFor>,
+) {
+  return page.route("**/rest/v1/rpc/home_stats*", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(stats),
+    });
+  });
+}
+
+export async function mockGravesList(page: Page, graves: MockGrave[]) {
+  await mockHomeStats(page, homeStatsFor(graves));
   return page.route("**/rest/v1/graves*", async (route) => {
     if (route.request().method() !== "GET") {
       await route.fallback();
@@ -171,12 +201,13 @@ function likeToRegExp(pattern: string) {
   return new RegExp(`^${source}$`, "i");
 }
 
-export function mockPaginatedGraves(
+export async function mockPaginatedGraves(
   page: Page,
   all: MockGrave[],
   options: { failOffsets?: number[] } = {},
 ) {
   const failures = new Set(options.failOffsets ?? []);
+  await mockHomeStats(page, homeStatsFor(all));
   return page.route("**/rest/v1/graves*", async (route) => {
     if (route.request().method() !== "GET") {
       await route.fallback();

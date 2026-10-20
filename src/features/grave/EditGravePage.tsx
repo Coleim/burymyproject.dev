@@ -1,6 +1,7 @@
 import { useAuth } from "@/features/auth/useAuth";
 import { supabase } from "@/lib/supabase";
 import type { GraveFormValues } from "@/lib/schemas/grave";
+import { Button } from "@/shared/components/Button";
 import { LinkButton } from "@/shared/components/LinkButton";
 import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
@@ -19,9 +20,10 @@ export function EditGravePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [grave, setGrave] = useState<Grave | null>(null);
-  const [status, setStatus] = useState<"loading" | "found" | "not-found">(
-    "loading",
-  );
+  const [status, setStatus] = useState<
+    "loading" | "found" | "not-found" | "error"
+  >("loading");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,9 +35,11 @@ export function EditGravePage() {
       .eq("public_slug", slug)
       .eq("author_id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (cancelled) return;
-        if (data) {
+        if (error) {
+          setStatus("error");
+        } else if (data) {
           setGrave(data);
           setStatus("found");
         } else {
@@ -46,7 +50,12 @@ export function EditGravePage() {
     return () => {
       cancelled = true;
     };
-  }, [slug, user]);
+  }, [slug, user, attempt]);
+
+  function retry() {
+    setStatus("loading");
+    setAttempt((n) => n + 1);
+  }
 
   async function handleSubmit(values: GraveFormValues) {
     if (!grave) return;
@@ -99,6 +108,15 @@ export function EditGravePage() {
         {status === "loading" && (
           <Main className={styles.state}>
             <p role="status">Digging up your grave...</p>
+          </Main>
+        )}
+        {status === "error" && (
+          <Main className={styles.state}>
+            <h1 className={styles["state-title"]}>Something went wrong</h1>
+            <p role="alert">
+              We couldn't dig up this grave. Please try again in a moment.
+            </p>
+            <Button onClick={retry}>Try again</Button>
           </Main>
         )}
         {status === "not-found" && (

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 
 function isHttpUrl(value: string) {
   if (value === "") return true;

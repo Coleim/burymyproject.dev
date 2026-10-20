@@ -68,7 +68,7 @@ alter table public.graves
 
 ```sql
 create index graves_author_id_idx on public.graves (author_id);
-create index graves_public_slug_idx on public.graves (public_slug);
+-- graves_public_slug_idx supprimé (doublon de l'index de la contrainte UNIQUE graves_public_slug_unique)
 create index graves_created_at_idx on public.graves (created_at desc);
 ```
 
@@ -137,6 +137,28 @@ Migration versionnée `supabase/migrations/20261020150000_harden_graves.sql`, ap
 - **Dépendances** : `npm audit fix` → 0 vulnérabilité (react-router-dom 7.18.4, vite 8.3.4, ws 8.22.0).
 - Cas ajoutés à `scripts/rls-integration-test.mjs` (exécuté en CI avec la clé service) : date forcée, champs figés, limites de taille, URL `javascript:` refusée, insertion anonyme refusée.
 - **Risques acceptés / non traités** : protection contre les mots de passe compromis (HIBP, plan Pro) ; captcha (nécessite un compte) ; `author_id` (UUID) exposé en lecture publique car utilisé pour les stats de la landing ; `localhost` conservé dans `uri_allow_list` pour le dev ; pas de pentest externe.
+
+### Revue d'architecture et de scalabilité du 20/10/2026
+
+Méthode : vérifications sur la vraie base (config PostgREST, index, `EXPLAIN ANALYZE`, seed de 2500-4000 tombes), mesures réseau en navigateur sur le build de prod, lecture du code.
+
+**Corrigé**
+- **Bug de correction + scalabilité des stats de la landing** : elles étaient calculées dans le navigateur à partir de `select author_id, cause` sur *toutes* les tombes publiques. PostgREST plafonne les réponses à `max_rows = 1000` : au-delà, « total graves » restait bloqué à 1000, et chaque visite téléchargeait ~83 ko. Remplacé par la fonction SQL `public.home_stats()` (`security invoker`, agrégats seuls, départage déterministe de la cause la plus fréquente) : 2377 tombes publiques → réponse exacte en 64 octets (migration `20261020170000_home_stats_and_index_cleanup.sql`, test d'intégration ajouté dans `scripts/rls-integration-test.mjs`).
+- **Index doublon** `graves_public_slug_idx` supprimé (même colonne que l'index de la contrainte UNIQUE : coût d'écriture sans bénéfice).
+- **Taille du bundle** : un seul chunk JS de 583 ko (165 ko gzip) → pages de formulaires/auth/privacy/my-graves chargées à la demande (`React.lazy`) ; landing/cemetery/tombe : **165 → 125 ko gzip** (−24 %), zod (36 ko gzip) ne se charge plus que sur les pages de formulaire. Pour que ça tienne, zod est configuré dans `src/lib/zod.ts` (import obligatoire, règle ESLint `no-restricted-imports`).
+- **Erreurs réseau trompeuses** : un échec de chargement affichait « This grave doesn't exist » (page d'une tombe, édition), « No projects buried here » (My Graveyard) et la suppression naviguait ailleurs même en cas d'échec. Désormais : état d'erreur + « Try again », et message si la suppression échoue.
+- Fichier doublon de 5 Mo supprimé (`src/assets/bg-home-4k - Copie.jpg`, non référencé ; il reste dans l'historique git), README mis à jour.
+
+**Constaté, volontairement non traité (à reconsidérer à l'échelle)**
+- Pagination du cemetery par `offset` avec `count: exact` à chaque « Load more » : 2-4 ms à 4000 lignes. Vers ~100k lignes : pagination par curseur (`created_at`), `count` seulement sur la 1re page, index partiel `(created_at desc) where is_public`.
+- Recherche `ilike '%x%'` : seq scan linéaire (~7 ms à 4000). Vers ~100k : `pg_trgm`. Recherche par tech stack = migration `search_text`.
+- Pas de cache client (react-query) : chaque navigation re-télécharge. Acceptable tant qu'aucun problème n'est mesuré (YAGNI).
+- `GravePage` et `EditGravePage` répètent la même logique « charger par slug » (statuts loading/found/not-found/error) : factoriser en hook si un 3e consommateur apparaît.
+- `src/types/database.types.ts` est écrit à la main : risque de dérive avec le schéma. L'API Management expose la génération de types (`GET /v1/projects/{ref}/types/typescript`) : un contrôle de dérive en CI est possible.
+- **Sitemap figé au build** : une nouvelle tombe n'y apparaît qu'au prochain déploiement. Un `schedule` (cron quotidien) dans `deploy.yml` le rafraîchirait et ferait aussi une requête quotidienne vers Supabase.
+- **À vérifier dans le dashboard** : le plan Supabase (non visible par l'API). Sur le plan Free, un projet sans activité est mis en pause après ~7 jours, ce qui casserait le site.
+- `author_id` reste lisible publiquement (déjà noté), images sources non utilisées par l'app (`undertaker.png` 2,7 Mo, `bg-home-4k.jpg` 1,2 Mo ; la version `.webp` est celle utilisée).
+- Nom du chunk vendor (`usePageTitle-*.js`) trompeur (nommage automatique de Rolldown), sans incidence.
 
 ## Architecture des routes (réelle)
 
@@ -293,7 +315,7 @@ Code front en place (`OAuthButtons.tsx` (Google + GitHub, liste de providers), t
 - [ ] Responsive fin sur petits écrans (fait : bouton de création après la preview sur mobile, menu hamburger dans la Navbar ; reste à re-tester composant par composant)
 - [ ] Métadonnées Open Graph dynamiques par tombe (voir Scaling, Phase 2)
 - [x] Headers de sécurité : CSP livrée en meta (cf. section Sécurité) ; `X-Frame-Options` & co impossibles sans hébergeur supportant les headers
-- [ ] Verification d'architecture et scalabilités
+- [x] Vérification d'architecture et scalabilités (cf. « Revue d'architecture et de scalabilité du 20/10/2026 »)
 - [x] Review du project : Good practices a verifier, tels que KISS, YAGNI, DRY, etc ... — fait un premier passage DRY : le pattern fond+overlay (`.page::before`/`.page::after`) était dupliqué à l'identique dans 7 fichiers CSS, factorisé via `composes` (`src/shared/styles/pageBackground.module.css`). Note technique : les `@keyframes` ne peuvent **pas** être partagées de la même façon (CSS Modules localise le nom utilisé dans `animation:` même sans `@keyframes` local correspondant dans le fichier — testé, ça casse l'animation en silence) ; elles restent dupliquées intentionnellement (3 occurrences identiques, `TombstoneCard`/`LandingPage`/`GravePage`).
 - [x] Skeletons de chargement (`TombstoneCardSkeleton`) sur `/cemetery`, `/my-graves` et `/graves/:slug`, remplace le texte "Loading..."
 - [x] Suppression d'une tombe déplacée de la grille `/my-graves` vers la page de détail `/graves/:slug` (visible seulement si `user.id === grave.author_id`), prépare l'emplacement du futur bouton "Edit"
@@ -367,7 +389,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (57 tests, 13 fichiers) :
+- Couverture actuelle (61 tests, 13 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion, `redirectTo` externe ignoré (open redirect)
@@ -377,6 +399,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
   - `e2e/edit-grave.spec.ts` — édition par l'auteur, not-found si pas propriétaire, redirection si déconnecté
   - `e2e/seo.spec.ts` — meta Open Graph/description/canonical, image de partage servie, titres de page
   - `e2e/a11y.spec.ts` (axe WCAG + best-practice, 10 pages × desktop/mobile), `e2e/keyboard.spec.ts` (skip link, focus, menu, reduced motion), `e2e/responsive.spec.ts` (pas de scroll horizontal 320→1440 px)
+  - `e2e/error-states.spec.ts` — échec de chargement d'une tombe / de « My Graveyard » (message d'erreur ≠ « n'existe pas » / état vide) avec retry, échec de suppression
   - `e2e/csp.spec.ts` — build de production (projet Playwright `production-build`, `vite preview`) : politique CSP stricte, aucune violation sur toutes les pages, script de restauration SPA autorisé
 
 ### Intégration — RLS contre le vrai Supabase

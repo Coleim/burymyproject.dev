@@ -17,23 +17,6 @@ type HomeStats = {
   topCause: string | null;
 };
 
-function computeTopCause(causes: (string | null)[]): string | null {
-  const counts = new Map<string, number>();
-  for (const cause of causes) {
-    if (!cause) continue;
-    counts.set(cause, (counts.get(cause) ?? 0) + 1);
-  }
-  let top: string | null = null;
-  let max = 0;
-  for (const [cause, count] of counts) {
-    if (count > max) {
-      max = count;
-      top = cause;
-    }
-  }
-  return top;
-}
-
 export function LandingPage() {
   usePageTitle();
   const [recentGraves, setRecentGraves] = useState<Grave[] | null>(null);
@@ -53,15 +36,14 @@ export function LandingPage() {
       });
 
     supabase
-      .from("graves")
-      .select("author_id, cause")
-      .eq("is_public", true)
+      .rpc("home_stats")
+      .single()
       .then(({ data }) => {
         if (cancelled || !data) return;
         setStats({
-          totalGraves: data.length,
-          developers: new Set(data.map((g) => g.author_id)).size,
-          topCause: computeTopCause(data.map((g) => g.cause)),
+          totalGraves: data.total_graves,
+          developers: data.developers,
+          topCause: data.top_cause,
         });
       });
 

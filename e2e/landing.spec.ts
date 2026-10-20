@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { makeGrave } from "./mocks/supabase";
+import { makeGrave, mockGravesList, mockHomeStats } from "./mocks/supabase";
 
 test.describe("Landing page", () => {
   test("shows the hero and navigation", async ({ page }) => {
@@ -20,19 +20,13 @@ test.describe("Landing page", () => {
     await expect(page.getByRole("link", { name: /sign up/i })).toBeVisible();
   });
 
-  test("shows real stats computed from Supabase data", async ({ page }) => {
-    const graves = [
-      makeGrave({ id: "1", author_id: "user-1", cause: "Scope Creep" }),
-      makeGrave({ id: "2", author_id: "user-1", cause: "Scope Creep" }),
-      makeGrave({ id: "3", author_id: "user-2", cause: "Lost Interest" }),
-    ];
-
-    await page.route("**/rest/v1/graves*", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(graves),
-      });
+  test("shows the stats returned by the home_stats function", async ({ page }) => {
+    await mockGravesList(page, []);
+    // Registered last, so it takes precedence over the stats mockGravesList adds.
+    await mockHomeStats(page, {
+      total_graves: 3,
+      developers: 2,
+      top_cause: "Scope Creep",
     });
 
     await page.goto("/");
@@ -42,6 +36,22 @@ test.describe("Landing page", () => {
     await expect(page.getByTestId("stat-top-cause")).toHaveText(
       "Scope Creep",
     );
+  });
+
+  test("stats are not computed in the browser from a list of graves", async ({ page }) => {
+    const rowRequests: string[] = [];
+    await mockGravesList(page, [makeGrave({ id: "1" })]);
+    page.on("request", (req) => {
+      const url = new URL(req.url());
+      if (url.pathname.endsWith("/rest/v1/graves") && url.searchParams.get("select") === "author_id,cause") {
+        rowRequests.push(req.url());
+      }
+    });
+
+    await page.goto("/");
+    await expect(page.getByTestId("stat-total-graves")).toBeVisible();
+
+    expect(rowRequests).toEqual([]);
   });
 });
 

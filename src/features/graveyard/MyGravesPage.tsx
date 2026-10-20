@@ -1,6 +1,7 @@
 import { useAuth } from "@/features/auth/useAuth";
 import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
+import { Button } from "@/shared/components/Button";
 import { LinkButton } from "@/shared/components/LinkButton";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { TombstoneCardSkeleton } from "@/shared/components/TombstoneCardSkeleton";
@@ -16,6 +17,8 @@ export function MyGravesPage() {
   usePageTitle("My graveyard");
   const { user } = useAuth();
   const [graves, setGraves] = useState<Grave[] | null>(null);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -26,14 +29,22 @@ export function MyGravesPage() {
       .select("*")
       .eq("author_id", user.id)
       .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (!cancelled) setGraves(data ?? []);
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setError(!!error);
+        setGraves(data ?? []);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, attempt]);
+
+  function retry() {
+    setGraves(null);
+    setError(false);
+    setAttempt((n) => n + 1);
+  }
 
   return (
     <div className={styles.page}>
@@ -56,7 +67,16 @@ export function MyGravesPage() {
             </div>
           )}
 
-          {graves !== null && graves.length === 0 && (
+          {graves !== null && graves.length === 0 && error && (
+            <div className={styles["empty-state"]} role="alert">
+              <p>Something went wrong while digging. Please try again in a moment.</p>
+              <Button variant="secondary" onClick={retry}>
+                Try again
+              </Button>
+            </div>
+          )}
+
+          {graves !== null && graves.length === 0 && !error && (
             <div className={styles["empty-state"]}>
               <p>
                 No projects buried here... yet. Are all your projects still

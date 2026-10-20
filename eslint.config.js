@@ -19,5 +19,18 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: [{
+          name: 'zod',
+          message: "Import { z } from '@/lib/zod' so zod runs jitless (strict CSP, no eval).",
+        }],
+      }],
+    },
+  },
+  {
+    // The one place allowed to import zod directly.
+    files: ['src/lib/zod.ts'],
+    rules: { 'no-restricted-imports': 'off' },
   },
 ])
