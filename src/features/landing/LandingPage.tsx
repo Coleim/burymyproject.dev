@@ -1,4 +1,4 @@
-import logo from "@/assets/grave-logo.png";
+import logo from "@/assets/grave-logo.webp";
 import { LinkButton } from "@/shared/components/LinkButton";
 import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
@@ -173,6 +173,8 @@ export function LandingPage() {
               <img
                 src={logo}
                 alt=""
+                width={29}
+                height={24}
                 className={styles["footer-logo-img"]}
               />
               burymyproject.dev

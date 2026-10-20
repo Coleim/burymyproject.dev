@@ -125,6 +125,17 @@ create policy "author can delete own graves"
 - **Content-Security-Policy** : livrée en `<meta>` dans le build de production (plugin `cspMetaPlugin` de `vite.config.ts`, hash sha256 du script inline calculé automatiquement ; origine Supabase prise dans `VITE_SUPABASE_URL`). `script-src 'self'` sans `unsafe-inline`/`unsafe-eval` (zod passe en `jitless`, cf. `src/lib/zodConfig.ts`), `style-src` sans `unsafe-inline`, `object-src 'none'`, `base-uri`/`form-action 'self'`. Vérifiée en navigateur réel sur le build de prod et par `e2e/csp.spec.ts` (projet Playwright `production-build`). **Limites GitHub Pages** : pas de vrais en-têtes HTTP, donc ni `X-Frame-Options`/`frame-ancestors` (clickjacking), ni `X-Content-Type-Options`, ni `Permissions-Policy` ; à revoir avec un hébergeur qui permet des headers (Cloudflare Pages/Netlify/Vercel).
 - `.env.local` et tout `.env.*` (sauf `.env.example`) sont ignorés par git.
 
+### Performance (audit Lighthouse du 20/10/2026)
+
+**Site en ligne** (mobile = profil réseau 4G lent + CPU ×4 ; desktop) : accessibilité **100**, SEO **100**, bonnes pratiques 96-100, performance desktop 99-100 ; mobile 71-98 avant corrections.
+
+**Corrigé** (mesuré sur un serveur local avec gzip, comme GitHub Pages ; avant → après) :
+- page d'accueil : score **78 → 95**, LCP 5,3 → 2,7 s, transfert 802 → 286 Ko ;
+- page de connexion : **84 → 97**, LCP 3,8 → 2,4 s, **décalage de mise en page (CLS) 0,12 → 0**, 753 → 238 Ko.
+Causes et remèdes : (1) logo PNG de **377 Ko** affiché à 28 px → WebP de 4 Ko, dimensions explicites (original conservé dans `concepts/`) ; (2) fond d'écran 4k de 168 Ko envoyé aux téléphones → variable CSS `--bg-home` (21 Ko à ≤ 900 px) ; (3) polices découvertes tard, donc élément LCP (le `<h1>`) peint après leur chargement → `<link rel="preload">` d'Inter et de Cinzel + police de secours « Inter Fallback » aux métriques d'Inter (supprime le décalage au remplacement) ; (4) `preconnect` vers Supabase injecté au build (≈ 300 ms).
+
+**Reste, non corrigeable sur GitHub Pages** : une URL profonde (`/login`, `/cemetery`…) répond d'abord **404** puis redirige (hack SPA) — environ 760 ms de redirection et l'erreur console qui coûte 4 points « bonnes pratiques ». Seul un hébergeur avec réécriture SPA (Cloudflare Pages, Netlify, Vercel) l'élimine. JavaScript inutilisé ≈ 67 Ko gzip (client Supabase) : à envisager si besoin.
+
 ### Tombes publiques uniquement et Founding Ghosts (20/10/2026)
 
 **Plus de tombes privées.** Une tombe privée devenue publique rendait ambigu « premier » (à la création ou à la publication ?), et elle ajoutait un 2e type d'invisibilité à côté du masquage de modération. Décision : toutes les tombes sont publiques ; le formulaire n'a plus de case de visibilité. Migration en **expand / contract** pour ne pas casser le site déployé : `20261020210000_public_graves_and_founding_ghosts.sql` (appliquée) interdit les tombes privées par `check (is_public)` et fait dépendre la policy de `hidden` seulement, mais **garde la colonne `is_public`** (toujours vraie) tant que l'ancien front la lit ; `20261020220000_drop_is_public.sql` la supprime ; elle n'a été appliquée **qu'après** déploiement du front sans `is_public` (bundle en ligne vérifié : aucune occurrence), le 20/10/2026 — la colonne n'existe plus. La migration refuse de s'exécuter s'il existe encore des tombes privées. (L'« unlisted » — lien secret hors cimetière — reste une option future.)
@@ -462,7 +473,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (108 tests, 20 fichiers) :
+- Couverture actuelle (112 tests, 21 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion, `redirectTo` externe ignoré (open redirect)
@@ -471,6 +482,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
   - `e2e/cemetery.spec.ts` — pagination « Load more » (mock de 4000 tombes), recherche, états vide/erreur
   - `e2e/cemetery-navigation.spec.ts` — `count` demandé uniquement sur la 1re page, images lazy, `content-visibility`, état dans l'URL (`?q=`, `?pages=` plafonné), retour arrière (recherche + pages + position de scroll, avec réseau lent), visite neuve = haut de page
   - `e2e/legal-and-moderation.spec.ts` — page `/terms` et ses liens, `rel="nofollow ugc"`, lien « Report this grave » prérempli (absent pour l'auteur), avis « hidden by a moderator », listes publiques filtrées sur `hidden=eq.false`
+  - `e2e/performance.spec.ts` — build de production : préchargement des 2 polices (avec `crossorigin`) et `preconnect` Supabase, fond 4k jamais envoyé aux téléphones (1280 px à la place), logo de quelques Ko avec dimensions explicites, aucune image > 200 Ko sur les pages d'entrée (mutation-vérifié)
   - `e2e/founding.spec.ts` — badge « Founding Ghost №n » sur les tombes fondatrices et elles seules, note sur la page de la tombe, rendu doré réellement appliqué (cadre, teinte), reflet **sous** le texte (mutation-vérifié), texte de carte non estompé (mutation-vérifié), mouvement réduit, badge contenu dans la carte à 320/375/768 px
   - `e2e/typography.spec.ts` — corps en Inter, titres en Cinzel, boutons/labels en monospace, aucun texte dans la police par défaut du navigateur (mutation-vérifié : remettre le reset après `index.css` fait réapparaître « Times »), Inter chargée depuis le site (italique et latin-ext seulement si besoin)
   - `e2e/self-hosted.spec.ts` — aucune requête vers googleapis/gstatic, Cinzel chargée depuis l'origine du site

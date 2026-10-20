@@ -26,13 +26,13 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      testIgnore: /(csp|oauth-only)\.spec\.ts/,
+      testIgnore: /(csp|oauth-only|performance)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], baseURL: devURL },
     },
     {
       // The Content-Security-Policy only exists in production builds.
       name: "production-build",
-      testMatch: /(csp|oauth-only)\.spec\.ts/,
+      testMatch: /(csp|oauth-only|performance)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], baseURL: previewURL },
     },
   ],

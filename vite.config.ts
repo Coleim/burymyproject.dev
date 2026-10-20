@@ -53,6 +53,17 @@ function cspMetaPlugin(): Plugin {
           attrs: { "http-equiv": "Content-Security-Policy", content: policy },
           injectTo: "head-prepend",
         },
+        // The home page asks Supabase for data right away: open the connection
+        // (DNS + TLS) while the scripts are still loading.
+        ...(supabaseOrigin
+          ? [
+              {
+                tag: "link",
+                attrs: { rel: "preconnect", href: supabaseOrigin, crossorigin: "" },
+                injectTo: "head-prepend" as const,
+              },
+            ]
+          : []),
       ];
     },
   };

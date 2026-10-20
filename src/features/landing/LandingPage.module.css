@@ -11,7 +11,7 @@
   left: 0;
   right: 0;
   height: 100vh;
-  background-image: url("../../assets/bg-home-4k.webp");
+  background-image: var(--bg-home);
   background-repeat: no-repeat;
   background-position: center bottom;
   background-size: cover;

@@ -1,4 +1,4 @@
-import logo from "@/assets/grave-logo.png";
+import logo from "@/assets/grave-logo.webp";
 import { useAuth } from "@/features/auth/useAuth";
 import { EMAIL_AUTH_ENABLED } from "@/lib/features";
 import { supabase } from "@/lib/supabase";
@@ -49,6 +49,8 @@ export function Navbar() {
           <img
             src={logo}
             alt=""
+            width={34}
+            height={28}
             className={styles["navbar-logo"]}
           />
           <span className={styles["navbar-name"]}>burymyproject.dev</span>
