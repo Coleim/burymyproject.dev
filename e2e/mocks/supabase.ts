@@ -96,6 +96,7 @@ export type MockGrave = {
   project_url: string | null;
   public_slug: string;
   is_public: boolean;
+  hidden: boolean;
   tombstone_bg: string;
   tombstone_fg: string;
   created_at: string;
@@ -116,6 +117,7 @@ export function makeGrave(overrides: Partial<MockGrave> = {}): MockGrave {
     project_url: null,
     public_slug: "devflow-abc123",
     is_public: true,
+    hidden: false,
     tombstone_bg: "grave_bg_01.webp",
     tombstone_fg: "grave_01.webp",
     created_at: now(),

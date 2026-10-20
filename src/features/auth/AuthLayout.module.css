@@ -193,3 +193,17 @@
   color: #e0695f;
   text-align: center;
 }
+
+.consent {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.consent a {
+  color: var(--color-accent-warm);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

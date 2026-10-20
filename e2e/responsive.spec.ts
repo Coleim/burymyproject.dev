@@ -37,7 +37,7 @@ for (const width of WIDTHS) {
     await page.getByRole("button", { name: /log in/i }).click();
     await expect(page).toHaveURL(/my-graves$/);
 
-    for (const path of ["", "cemetery", "graves/rs-1", "graves/rs-1/edit", "graves/new", "my-graves", "privacy", "login", "signup", "nope"]) {
+    for (const path of ["", "cemetery", "graves/rs-1", "graves/rs-1/edit", "graves/new", "my-graves", "privacy", "terms", "login", "signup", "nope"]) {
       await page.goto(path);
       await page.waitForLoadState("networkidle");
       expect(await overflowingElements(page), `${path || "/"} at ${width}px`).toEqual([]);

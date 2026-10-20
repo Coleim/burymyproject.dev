@@ -15,6 +15,7 @@ export type Database = {
           project_url: string | null;
           public_slug: string;
           is_public: boolean;
+          hidden: boolean;
           tombstone_bg: string;
           tombstone_fg: string;
           created_at: string;
@@ -33,6 +34,7 @@ export type Database = {
           project_url?: string | null;
           public_slug?: string;
           is_public?: boolean;
+          hidden?: boolean;
           tombstone_bg: string;
           tombstone_fg: string;
           created_at?: string;
@@ -51,6 +53,7 @@ export type Database = {
           project_url?: string | null;
           public_slug?: string;
           is_public?: boolean;
+          hidden?: boolean;
           tombstone_bg?: string;
           tombstone_fg?: string;
           created_at?: string;

@@ -13,6 +13,8 @@ export type Grave = {
   project_url: string | null;
   public_slug: string;
   is_public: boolean;
+  /** Set by moderators only; the author still sees their own hidden grave. */
+  hidden: boolean;
   tombstone_bg: string;
   tombstone_fg: string;
 };

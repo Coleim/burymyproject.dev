@@ -1,6 +1,8 @@
+import { CONTACT_EMAIL } from "@/lib/contact";
 import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
-import styles from "./PrivacyPage.module.css";
+import { Link } from "react-router-dom";
+import styles from "./LegalPage.module.css";
 import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 export function PrivacyPage() {
@@ -95,10 +97,8 @@ export function PrivacyPage() {
               <h2 className={styles["section-title"]}>Contact</h2>
               <p>
                 Questions about this policy or your data? Email us at{" "}
-                <a href="mailto:burymyproject@gmail.com">
-                  burymyproject@gmail.com
-                </a>
-                .
+                <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. See
+                also our <Link to="/terms">Terms of Service</Link>.
               </p>
             </div>
           </div>

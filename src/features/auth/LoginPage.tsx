@@ -1,9 +1,10 @@
 import { EMAIL_AUTH_ENABLED } from "@/lib/features";
 import { safeRedirectPath } from "@/lib/safeRedirect";
 import { lazy, Suspense } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { AuthLayout } from "./AuthLayout";
 import { OAuthButtons } from "./OAuthButtons";
+import styles from "./AuthLayout.module.css";
 import { useAuth } from "./useAuth";
 import { usePageTitle } from "@/shared/lib/usePageTitle";
 
@@ -42,6 +43,10 @@ export function LoginPage() {
         </Suspense>
       )}
       <OAuthButtons redirectTo={redirectTo} />
+      <p className={styles.consent}>
+        By continuing you agree to our <Link to="/terms">Terms</Link> and{" "}
+        <Link to="/privacy">Privacy Policy</Link>.
+      </p>
     </AuthLayout>
   );
 }

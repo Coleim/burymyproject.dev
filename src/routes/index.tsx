@@ -32,6 +32,9 @@ const MyGravesPage = lazy(() =>
     default: m.MyGravesPage,
   })),
 );
+const TermsPage = lazy(() =>
+  import("@/features/legal/TermsPage").then((m) => ({ default: m.TermsPage })),
+);
 const PrivacyPage = lazy(() =>
   import("@/features/legal/PrivacyPage").then((m) => ({
     default: m.PrivacyPage,
@@ -50,6 +53,7 @@ export function AppRouter() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/cemetery" element={<CemeteryPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/graves/:slug" element={<GravePage />} />
             <Route
               path="/graves/new"

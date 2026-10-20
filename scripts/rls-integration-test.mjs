@@ -317,6 +317,72 @@ try {
       !statsError && !!stats && stats.total_graves === visibleCount,
       statsError?.message ?? `stats=${stats?.total_graves} visible=${visibleCount}`,
     );
+
+    // --- Moderation: `hidden` is admin-only and honoured by the public policy ---
+    await admin.from("graves").update({ hidden: true }).eq("id", publicGrave.id);
+
+    const { data: anonSeesHidden } = await anonClient
+      .from("graves")
+      .select("id")
+      .eq("id", publicGrave.id);
+    check(
+      "A hidden grave disappears for anonymous visitors",
+      (anonSeesHidden?.length ?? 1) === 0,
+    );
+
+    const { data: bSeesHidden } = await clientB
+      .from("graves")
+      .select("id")
+      .eq("id", publicGrave.id);
+    check(
+      "A hidden grave disappears for other signed-in users",
+      (bSeesHidden?.length ?? 1) === 0,
+    );
+
+    const { data: aSeesHidden } = await clientA
+      .from("graves")
+      .select("id, hidden")
+      .eq("id", publicGrave.id);
+    check(
+      "The author still sees their own hidden grave",
+      aSeesHidden?.length === 1 && aSeesHidden[0].hidden === true,
+    );
+
+    const { data: unhideAttempt } = await clientA
+      .from("graves")
+      .update({ hidden: false })
+      .eq("id", publicGrave.id)
+      .select("hidden");
+    check(
+      "The author CANNOT unhide a moderated grave",
+      unhideAttempt?.[0]?.hidden === true,
+      `hidden after attempt: ${unhideAttempt?.[0]?.hidden}`,
+    );
+
+    const { data: selfHidden } = await clientA
+      .from("graves")
+      .insert({
+        author_id: userAId,
+        name: "RLS Integration Test — Self-hidden",
+        epitaph: "Trying to set the moderation flag.",
+        born: "2024-01-01",
+        died: "2024-02-01",
+        cause: "Curiosity",
+        tech_stack: [],
+        is_public: false,
+        hidden: true,
+        tombstone_bg: "grave_bg_01.webp",
+        tombstone_fg: "grave_01.webp",
+      })
+      .select("hidden")
+      .single();
+    check(
+      "The `hidden` flag cannot be set by an author on insert",
+      selfHidden?.hidden === false,
+      `stored hidden: ${selfHidden?.hidden}`,
+    );
+
+    await admin.from("graves").update({ hidden: false }).eq("id", publicGrave.id);
   }
 } finally {
   // --- Cleanup: always runs, even if an assertion threw ---

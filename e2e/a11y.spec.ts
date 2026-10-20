@@ -35,7 +35,7 @@ for (const viewport of [
       const grave = makeGrave({ public_slug: "a11y-1", project_url: "https://github.com/me/x" });
       await mockPaginatedGraves(page, [grave, ...makeManyGraves(5)]);
       const report: Record<string, unknown> = {};
-      for (const path of ["", "cemetery", "graves/a11y-1", "login", "signup", "privacy", "nope"]) {
+      for (const path of ["", "cemetery", "graves/a11y-1", "login", "signup", "privacy", "terms", "nope"]) {
         await page.goto(path);
         await page.waitForLoadState("networkidle");
         report[path || "/"] = await scan(page);

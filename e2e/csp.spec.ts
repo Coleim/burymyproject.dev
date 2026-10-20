@@ -44,7 +44,7 @@ test.describe("Content-Security-Policy (production build)", () => {
         ...(await page.evaluate(() => (window as unknown as { __csp: string[] }).__csp)),
       );
 
-    for (const path of ["", "cemetery", "graves/csp-1", "login", "signup", "privacy", "nope"]) {
+    for (const path of ["", "cemetery", "graves/csp-1", "login", "signup", "privacy", "terms", "nope"]) {
       await page.goto(path);
       await page.waitForLoadState("networkidle");
       await collect();

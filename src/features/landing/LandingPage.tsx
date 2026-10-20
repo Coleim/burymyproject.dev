@@ -29,6 +29,7 @@ export function LandingPage() {
       .from("graves")
       .select("*")
       .eq("is_public", true)
+      .eq("hidden", false)
       .order("created_at", { ascending: false })
       .limit(6)
       .then(({ data }) => {
@@ -203,6 +204,7 @@ export function LandingPage() {
               LinkedIn
             </a>
             <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
           </div>
         </footer>
       </div>

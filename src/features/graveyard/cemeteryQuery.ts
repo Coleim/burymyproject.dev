@@ -32,7 +32,8 @@ export async function fetchGraves({
   let query = supabase
     .from("graves")
     .select("*", withCount ? { count: "exact" } : undefined)
-    .eq("is_public", true);
+    .eq("is_public", true)
+    .eq("hidden", false);
 
   if (term) query = query.ilike("name", `%${escapeLike(term)}%`);
 

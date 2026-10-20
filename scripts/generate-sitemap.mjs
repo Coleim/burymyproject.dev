@@ -29,6 +29,7 @@ async function fetchPublicGraves() {
     const url = new URL(`${supabaseUrl}/rest/v1/graves`);
     url.searchParams.set("select", "public_slug,updated_at");
     url.searchParams.set("is_public", "eq.true");
+    url.searchParams.set("hidden", "eq.false");
     url.searchParams.set("order", "created_at.desc");
     const res = await fetch(url, {
       headers: {
@@ -49,6 +50,7 @@ const entries = [
   { path: "", priority: "1.0" },
   { path: "cemetery", priority: "0.8" },
   { path: "privacy", priority: "0.2" },
+  { path: "terms", priority: "0.2" },
 ];
 
 if (supabaseUrl && anonKey) {

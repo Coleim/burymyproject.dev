@@ -3,6 +3,7 @@ import { Main } from "@/shared/components/Main";
 import { Navbar } from "@/shared/components/Navbar";
 import { TombstoneCard } from "@/shared/components/TombstoneCard";
 import { TombstoneCardSkeleton } from "@/shared/components/TombstoneCardSkeleton";
+import { CONTACT_EMAIL } from "@/lib/contact";
 import { Button } from "@/shared/components/Button";
 import { LinkButton } from "@/shared/components/LinkButton";
 import { supabase } from "@/lib/supabase";
@@ -11,6 +12,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { Grave } from "./types";
 import styles from "./GravePage.module.css";
 import { usePageTitle } from "@/shared/lib/usePageTitle";
+
+function reportHref(grave: Grave) {
+  const subject = `Report: ${grave.name} (${grave.public_slug})`;
+  const body = [
+    `I'd like to report this grave: ${window.location.href}`,
+    "",
+    "What is wrong with it?",
+    "",
+  ].join("\n");
+  return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 export function GravePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -143,7 +155,7 @@ export function GravePage() {
                   className={styles["project-link"]}
                   href={grave.project_url}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="nofollow ugc noopener noreferrer"
                 >
                   Visit the project's remains ↗
                 </a>
@@ -154,7 +166,22 @@ export function GravePage() {
                   Buried on{" "}
                   {new Date(grave.created_at).toLocaleDateString("en-US")}
                 </span>
+                {user?.id !== grave.author_id && (
+                  <a
+                    className={styles["report-link"]}
+                    href={reportHref(grave)}
+                  >
+                    Report this grave
+                  </a>
+                )}
               </div>
+
+              {grave.hidden && user?.id === grave.author_id && (
+                <p className={styles["hidden-notice"]} role="status">
+                  This grave was hidden by a moderator, so only you can see it.
+                  Write to {CONTACT_EMAIL} if you think this is a mistake.
+                </p>
+              )}
 
               {user?.id === grave.author_id && (
                 <div className={styles.actions}>

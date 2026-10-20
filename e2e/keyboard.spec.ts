@@ -17,7 +17,7 @@ test.describe("Keyboard navigation", () => {
 
   test("every page has exactly one main landmark and one h1", async ({ page }) => {
     await mockPaginatedGraves(page, [makeGrave({ public_slug: "kb-1" }), ...makeManyGraves(2)]);
-    for (const path of ["", "cemetery", "graves/kb-1", "login", "signup", "privacy", "nope"]) {
+    for (const path of ["", "cemetery", "graves/kb-1", "login", "signup", "privacy", "terms", "nope"]) {
       await page.goto(path);
       await expect(page.locator("main")).toHaveCount(1);
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
