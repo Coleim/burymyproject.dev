@@ -90,4 +90,26 @@ test.describe("Edit a grave", () => {
     await expect(page.getByRole("heading", { name: grave.name })).toBeVisible();
     await expect(page.getByRole("link", { name: "Edit this grave" })).toBeHidden();
   });
+
+  test("Edit and Delete buttons have the same height and font", async ({ page }) => {
+    const grave = makeGrave({ public_slug: "mine-1" });
+    await page.route("**/rest/v1/graves*", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([grave]) }),
+    );
+    await login(page);
+    await page.goto("graves/mine-1");
+
+    const measure = (name: RegExp, role: "link" | "button") =>
+      page.getByRole(role, { name }).evaluate((el) => {
+        const cs = getComputedStyle(el);
+        return {
+          height: Math.round(el.getBoundingClientRect().height),
+          font: `${cs.fontFamily}|${cs.fontSize}|${cs.letterSpacing}|${cs.textTransform}`,
+        };
+      });
+    const edit = await measure(/Edit this grave/, "link");
+    const del = await measure(/Delete the grave/, "button");
+
+    expect(del).toEqual(edit);
+  });
 });

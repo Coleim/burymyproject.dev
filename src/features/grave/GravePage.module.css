@@ -87,17 +87,26 @@
   gap: 0.75rem;
 }
 
+/* Same box as the "Edit this grave" button next to it: same height, same font. */
+.actions > a,
+.actions > button {
+  box-sizing: border-box;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .delete-button {
   background: transparent;
   border: 1px solid var(--color-border);
   border-radius: 3px;
   color: var(--color-text-muted);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  font-size: 0.875rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 0.4rem 0.75rem;
-  min-height: 44px;
+  padding: 0.5rem 0.75rem;
   cursor: pointer;
 }
 

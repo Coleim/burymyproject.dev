@@ -67,7 +67,7 @@ export function TombstoneCard({
       <div className={styles["tombstone-overlay"]}>
         {foundingRank ? (
           <span className={styles["founding-badge"]}>
-            <span aria-hidden="true">👻</span> {FOUNDING_TITLE} №{foundingRank}
+            <span aria-hidden="true">👻</span> {FOUNDING_TITLE} #{foundingRank}
           </span>
         ) : null}
         <div className={styles["tombstone-top-row"]}>

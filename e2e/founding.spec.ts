@@ -10,8 +10,8 @@ test.describe("Founding Ghost", () => {
     await mockPaginatedGraves(page, [founding, ordinary, tenth]);
     await page.goto("cemetery");
 
-    await expect(page.getByRole("link", { name: /First Ghost/ })).toContainText("Founding Ghost №1");
-    await expect(page.getByRole("link", { name: /Tenth Ghost/ })).toContainText("Founding Ghost №10");
+    await expect(page.getByRole("link", { name: /First Ghost/ })).toContainText("Founding Ghost #1");
+    await expect(page.getByRole("link", { name: /Tenth Ghost/ })).toContainText("Founding Ghost #10");
     await expect(page.getByRole("link", { name: /Ordinary Grave/ })).not.toContainText("Founding Ghost");
     await expect(page.getByText(/Founding Ghost/)).toHaveCount(2);
   });
@@ -19,7 +19,7 @@ test.describe("Founding Ghost", () => {
   test("a founding grave's page explains the badge; an ordinary one doesn't", async ({ page }) => {
     await mockPaginatedGraves(page, [founding]);
     await page.goto("graves/f-1");
-    await expect(page.getByText(/Founding Ghost №1 of 10: one of the first ten graves/)).toBeVisible();
+    await expect(page.getByText(/Founding Ghost #1 of 10: one of the first ten graves/)).toBeVisible();
 
     await page.unrouteAll({ behavior: "ignoreErrors" });
     await mockPaginatedGraves(page, [ordinary]);
@@ -100,6 +100,43 @@ test.describe("Founding Ghost", () => {
       parseFloat(getComputedStyle(a.querySelector("[class*='tombstone-image']")!, "::after").animationDuration),
     );
     expect(duration).toBeLessThan(0.01);
+  });
+
+  test("the shine loops without a visible jump: invisible at both ends, moving one way in between", async ({ page }) => {
+    await mockPaginatedGraves(page, [founding]);
+    await page.goto("cemetery");
+    const card = page.getByRole("link", { name: /First Ghost/ });
+    await expect(card).toBeVisible();
+
+    const samples = await card.evaluate(async (a) => {
+      const image = a.querySelector("[class*='tombstone-image']")!;
+      const anim = image.getAnimations({ subtree: false }).concat(
+        document.getAnimations().filter((x) => (x.effect as KeyframeEffect).target === image),
+      ).find((x) => (x as CSSAnimation).animationName?.includes("founding-sheen"))!;
+      anim.pause();
+      const out: { t: number; x: number; opacity: number }[] = [];
+      for (let t = 0; t <= 3590; t += 70) {
+        anim.currentTime = t;
+        const cs = getComputedStyle(image, "::after");
+        out.push({ t, x: new DOMMatrix(cs.transform).m41, opacity: Number(cs.opacity) });
+      }
+      return out;
+    });
+
+    const width = 210;
+    // Both ends of the loop show nothing, so restarting cannot be seen.
+    expect(samples[0].opacity).toBe(0);
+    expect(samples[samples.length - 1].opacity).toBe(0);
+    // Whenever it is visible it travels left to right, never backwards or parked.
+    const visible = samples.filter((s) => s.opacity > 0.05);
+    expect(visible.length).toBeGreaterThan(10);
+    for (let i = 1; i < visible.length; i++) {
+      expect(visible[i].x).toBeGreaterThanOrEqual(visible[i - 1].x);
+      // A pause is only allowed once it is entirely outside the card, never in a corner.
+      if (visible[i].x === visible[i - 1].x) expect(Math.abs(visible[i].x)).toBeGreaterThanOrEqual(width);
+    }
+    // At the moment it fades in, it is fully outside the card (nothing in a corner).
+    expect(Math.abs(visible[0].x)).toBeGreaterThanOrEqual(width);
   });
 
   for (const width of [320, 375, 768]) {

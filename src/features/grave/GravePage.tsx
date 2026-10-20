@@ -140,7 +140,7 @@ export function GravePage() {
             <div className={styles.details}>
               {grave.founding_rank && (
                 <p className={styles["founding-note"]}>
-                  <span aria-hidden="true">👻</span> {FOUNDING_TITLE} №
+                  <span aria-hidden="true">👻</span> {FOUNDING_TITLE} #
                   {grave.founding_rank} of {FOUNDING_SLOTS}: one of the first
                   ten graves ever dug here.
                 </p>

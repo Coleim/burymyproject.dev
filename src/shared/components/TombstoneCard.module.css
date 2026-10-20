@@ -167,17 +167,31 @@
     rgba(255, 232, 160, 0.3) 53%,
     transparent 64%
   );
-  background-size: 260% 100%;
+  /* Moves with a transform, from fully off the left edge to fully off the
+     right one, and is invisible at both ends: nothing to see when the loop
+     restarts, so no jump. (Animating background-position left the band parked
+     in a corner and snapped it back.) */
+  transform: translateX(-130%);
+  opacity: 0;
   animation: founding-sheen 3.6s ease-in-out infinite;
 }
 
 @keyframes founding-sheen {
   0% {
-    background-position: 170% 0;
+    transform: translateX(-130%);
+    opacity: 0;
   }
-  55%,
+  4% {
+    opacity: 1;
+  }
+  52% {
+    transform: translateX(130%);
+    opacity: 1;
+  }
+  56%,
   100% {
-    background-position: -70% 0;
+    transform: translateX(130%);
+    opacity: 0;
   }
 }
 

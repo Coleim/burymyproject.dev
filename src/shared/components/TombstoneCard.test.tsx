@@ -55,12 +55,12 @@ describe("TombstoneCard", () => {
 
     it.each([1, 4, 10])("shows a text badge with the rank %i", (rank) => {
       renderCard(rank);
-      expect(screen.getByText(new RegExp(`Founding Ghost\\s*№${rank}$`))).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(`Founding Ghost\\s*#${rank}$`))).toBeInTheDocument();
     });
 
     it("does not rely on colour alone: the badge is part of the link's accessible name", () => {
       renderCard(3);
-      expect(screen.getByRole("link")).toHaveAccessibleName(/Founding Ghost\s*№3/);
+      expect(screen.getByRole("link")).toHaveAccessibleName(/Founding Ghost\s*#3/);
     });
 
     it("marks the card so the golden styling applies", () => {
