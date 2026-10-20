@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { GraveForm } from "./GraveForm";
 import { GraveFormShell } from "./GraveFormShell";
 import { toGraveRow } from "./graveRow";
+import { Undertaker } from "./Undertaker";
 import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 export function NewGravePage() {
@@ -38,6 +39,7 @@ export function NewGravePage() {
     <GraveFormShell
       title="Dig a new grave"
       subtitle="Give your abandoned project the send-off it deserves."
+      illustration={<Undertaker />}
     >
       <GraveForm onSubmit={handleSubmit} />
     </GraveFormShell>
