@@ -51,7 +51,7 @@ create table public.graves (
   tech_stack   text[] not null default '{}',
   project_url  text check (project_url is null or (char_length(project_url) <= 500 and project_url ~* '^https?://[^\s]+$')),  -- migration supabase/migrations/20261020120000_add_project_url.sql
   public_slug  text unique not null default translate(encode(gen_random_bytes(6), 'base64'), '+/=', '-_'),
-  is_public    boolean not null default true,
+  is_public    boolean not null default true,  -- toujours vrai (check graves_always_public) ; supprimée par supabase/migrations/pending/20261020220000_drop_is_public.sql après déploiement
   tombstone_bg text not null default 'grave_bg_01.webp',  -- assigned once at creation, fixed forever (not user-editable yet)
   tombstone_fg text not null default 'grave_01.webp',
   created_at   timestamptz not null default now(),
@@ -110,6 +110,8 @@ create policy "author can delete own graves"
   using (auth.uid() = author_id);
 ```
 
+> Ces policies sont l'état **initial**. L'état actuel (rôles, `(select auth.uid())`, `hidden`, plus de tombes privées) est décrit dans « Durcissement », « Avant l'ouverture au public » et « Tombes publiques uniquement » ci-dessous ; les migrations de `supabase/migrations/` font foi.
+
 ### Types TypeScript
 
 `src/types/database.types.ts` est écrit à la main (pas de CLI Supabase liée au projet). Si la CLI est liée un jour : `npx supabase gen types typescript --project-id bibzxeryywqvjwoejgwz > src/types/database.types.ts`, puis vérifier que `src/features/grave/types.ts` reste aligné.
@@ -122,6 +124,19 @@ create policy "author can delete own graves"
 - `public_slug` généré côté BDD (`default` SQL), jamais côté client.
 - **Content-Security-Policy** : livrée en `<meta>` dans le build de production (plugin `cspMetaPlugin` de `vite.config.ts`, hash sha256 du script inline calculé automatiquement ; origine Supabase prise dans `VITE_SUPABASE_URL`). `script-src 'self'` sans `unsafe-inline`/`unsafe-eval` (zod passe en `jitless`, cf. `src/lib/zodConfig.ts`), `style-src` sans `unsafe-inline`, `object-src 'none'`, `base-uri`/`form-action 'self'`. Vérifiée en navigateur réel sur le build de prod et par `e2e/csp.spec.ts` (projet Playwright `production-build`). **Limites GitHub Pages** : pas de vrais en-têtes HTTP, donc ni `X-Frame-Options`/`frame-ancestors` (clickjacking), ni `X-Content-Type-Options`, ni `Permissions-Policy` ; à revoir avec un hébergeur qui permet des headers (Cloudflare Pages/Netlify/Vercel).
 - `.env.local` et tout `.env.*` (sauf `.env.example`) sont ignorés par git.
+
+### Tombes publiques uniquement et Founding Ghosts (20/10/2026)
+
+**Plus de tombes privées.** Une tombe privée devenue publique rendait ambigu « premier » (à la création ou à la publication ?), et elle ajoutait un 2e type d'invisibilité à côté du masquage de modération. Décision : toutes les tombes sont publiques ; le formulaire n'a plus de case de visibilité. Migration en **expand / contract** pour ne pas casser le site déployé : `20261020210000_public_graves_and_founding_ghosts.sql` (appliquée) interdit les tombes privées par `check (is_public)` et fait dépendre la policy de `hidden` seulement, mais **garde la colonne `is_public`** (toujours vraie) tant que l'ancien front la lit ; `supabase/migrations/pending/20261020220000_drop_is_public.sql` la supprime et ne s'applique **qu'après** déploiement du front sans `is_public`. La migration refuse de s'exécuter s'il existe encore des tombes privées. (L'« unlisted » — lien secret hors cimetière — reste une option future.)
+
+**Founding Ghosts.** Les 10 premières personnes à enterrer une tombe reçoivent chacune une **première tombe dorée** numérotée 1 à 10 (`graves.founding_rank`).
+- Règles : par ordre de création ; **un emplacement par personne** (seule sa première tombe peut être dorée) ; **permanent** : supprimer la tombe ou le compte ne libère jamais l'emplacement (« tant pis »). Le registre `founding_ghosts` (rang, `user_id`/`grave_id` annulés à la suppression) n'est accessible à aucun rôle API.
+- Attribution par un trigger `AFTER INSERT` (`claim_founding_ghost`, `security definer`, verrou consultatif pour sérialiser) ; `founding_rank` est forcé à `null` à l'insertion par un client et figé à la mise à jour (`protect_grave_columns`). **Seules les personnes réelles connectées via l'API réclament un rang** : pas les insertions d'administration (seed, restaurations) ni les comptes de test à domaine réservé (`example.com/org/net`, `.invalid`, `.test`, `.example`) — sinon chaque exécution de la CI aurait consommé des emplacements.
+- Vérifié par simulation de rôles (transaction annulée) : attribution 1…10 dans l'ordre, une seule par personne, emplacement conservé après suppression de la tombe **et** du compte, 11e personne sans rang, comptes de test et admin sans rang, client incapable de forger ou modifier un rang, registre illisible/inscriptible par `anon`/`authenticated`.
+- Affichage (`TombstoneCard`, `foundingRank`) : badge texte « 👻 Founding Ghost №n » (jamais la couleur seule), cadre et halo dorés, artwork teinté, reflet lent **sous** la couche de texte (jamais sur les dates/nom/badge), coupé en mouvement réduit ; note explicative sur la page de la tombe. Le nom est une constante (`src/lib/founding.ts`).
+- **Idée non faite** : un compteur « N places restantes sur 10 » sur la landing (nécessite une fonction `security definer` lisant le registre).
+
+**Correction d'une affirmation précédente (contraste).** L'audit de contraste du 20/10 mesurait la couleur de chaque texte mais **pas l'opacité de l'élément** : il avait manqué les textes volontairement estompés des cartes (dates à `opacity: .55` → 2,7:1 ; épitaphe à `.6` → 3,4:1 sur certains artworks). Corrigé : opacités relevées (≥ .9), pastille de cause opaque, **voile sombre** (dégradé haut + halo central) derrière le texte de la carte. Re-mesuré avec l'opacité prise en compte, sur les pixels réels, **10 fonds × 13 avant-plans, cartes ordinaires et dorées, à 1280/768/375/320 px** (pages courtes de 3 cartes : sur une page très haute la sonde donnait des faux négatifs) : 0 échec. Test e2e de garde (`founding.spec.ts`) : opacités ≥ .9, voile présent, pastille ≥ .85.
 
 ### Avant l'ouverture au public (20/10/2026)
 
@@ -173,7 +188,7 @@ Via l'API, chaque appel coûte ~0,3 s, presque uniquement de la latence réseau 
 **Fait** (indépendant de la taille) : images de cartes `loading="lazy"` + `decoding="async"` ; `content-visibility: auto` sur les cartes des grilles ; `count` demandé seulement sur la 1re page d'une recherche (une page courte marque la fin de liste) ; recherche et nombre de pages chargées dans l'URL (`?q=`, `?pages=` plafonné à 10, restauré en **une seule requête**) ; position de scroll sauvegardée par terme et restaurée après « Retour » (nécessaire sur Firefox/WebKit) ; `ScrollToTop` global sur les navigations hors « Retour ». « Load more » est conservé (choix UX) : pas de scroll infini.
 
 **À faire vers ~10 000 tombes**
-- Pagination par curseur (`created_at`, `id`) + index partiel `(created_at desc, id desc) where is_public` : coût constant quelle que soit la profondeur, pages stables quand des tombes arrivent.
+- Pagination par curseur (`created_at`, `id`) + index partiel `(created_at desc, id desc) where not hidden` : coût constant quelle que soit la profondeur, pages stables quand des tombes arrivent.
 - Index `pg_trgm` (GIN) sur le nom ; recherche par tech stack = colonne `search_text` (migration, fonction immuable).
 - `home_stats()` : précalculer dans une petite table rafraîchie par `pg_cron` toutes les quelques minutes (lecture O(1)) au lieu d'un scan complet à chaque visite.
 - Sitemap : au-delà de 50 000 URLs le script tronque silencieusement → sitemap index + plusieurs fichiers.
@@ -432,7 +447,7 @@ L'app est déployée en continu sur GitHub Pages (project page `coleim.github.io
 
 - Config : `vitest.config.ts` (environnement `jsdom`, alias `@`, exclut `e2e/**`)
 - Scripts : `npm run test:unit` / `npm run test:unit:watch`
-- Couverture actuelle (93 tests, 12 fichiers) :
+- Couverture actuelle (102 tests, 12 fichiers) :
   - `scripts/lib/export-crypto.test.mjs`, `scripts/lib/export-snapshot.test.mjs` — chiffrement de l'export (aller-retour, mauvaise phrase, fichier altéré, aucun clair dans le fichier) et pagination > 1000 lignes
   - `src/lib/schemas/grave.test.ts` — règles zod (`died >= born`, champs optionnels, limite `tech_stack`)
   - `src/shared/components/TagInput.test.tsx` — ajout/suppression de tags, anti-doublon, limite `max`
@@ -447,7 +462,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (99 tests, 19 fichiers) :
+- Couverture actuelle (108 tests, 20 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion, `redirectTo` externe ignoré (open redirect)
@@ -456,6 +471,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
   - `e2e/cemetery.spec.ts` — pagination « Load more » (mock de 4000 tombes), recherche, états vide/erreur
   - `e2e/cemetery-navigation.spec.ts` — `count` demandé uniquement sur la 1re page, images lazy, `content-visibility`, état dans l'URL (`?q=`, `?pages=` plafonné), retour arrière (recherche + pages + position de scroll, avec réseau lent), visite neuve = haut de page
   - `e2e/legal-and-moderation.spec.ts` — page `/terms` et ses liens, `rel="nofollow ugc"`, lien « Report this grave » prérempli (absent pour l'auteur), avis « hidden by a moderator », listes publiques filtrées sur `hidden=eq.false`
+  - `e2e/founding.spec.ts` — badge « Founding Ghost №n » sur les tombes fondatrices et elles seules, note sur la page de la tombe, rendu doré réellement appliqué (cadre, teinte), reflet **sous** le texte (mutation-vérifié), texte de carte non estompé (mutation-vérifié), mouvement réduit, badge contenu dans la carte à 320/375/768 px
   - `e2e/typography.spec.ts` — corps en Inter, titres en Cinzel, boutons/labels en monospace, aucun texte dans la police par défaut du navigateur (mutation-vérifié : remettre le reset après `index.css` fait réapparaître « Times »), Inter chargée depuis le site (italique et latin-ext seulement si besoin)
   - `e2e/self-hosted.spec.ts` — aucune requête vers googleapis/gstatic, Cinzel chargée depuis l'origine du site
   - `e2e/oauth-only.spec.ts` — build de production, connexion OAuth uniquement : pas de champs email/mot de passe, `/signup` → `/login`, un seul « Sign in », code du formulaire email jamais téléchargé, destination transmise au fournisseur, retour connecté → destination, `redirectTo` hostile ignoré (mutation-vérifié)

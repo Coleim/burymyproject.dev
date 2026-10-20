@@ -24,7 +24,8 @@ Every developer has a folder full of half-finished ideas. `burymyproject.dev` gi
 - ✨ "Generate" buttons to pick a random epitaph/cause of death, plus a live tombstone preview while filling the form
 - 🔗 Public, shareable link for each grave, with an optional link to the project's repo or site
 - ✏️ Edit your graves after burying them
-- 📜 "My Graveyard" — a private dashboard of everything you've buried
+- 📜 "My Graveyard" — your personal dashboard of everything you've buried
+- 👻 **Founding Ghosts**: the first ten people to bury a grave each get a golden, numbered first grave, for good
 - 🌍 "Global Cemetery" — browse every public grave buried by the community, with "Load more" pagination and name search
 - 🔐 Sign in with Google or GitHub (Supabase Auth). Email/password exists in the code behind `VITE_AUTH_EMAIL_ENABLED` but is off until reliable email sending is set up
 - 📱 Responsive down to 320px, with a mobile menu
@@ -76,7 +77,7 @@ npm run dev
 
 ## Database migrations
 
-SQL changes live in [`supabase/migrations/`](./supabase/migrations) and are versioned by timestamp. They are applied manually (Supabase Dashboard SQL editor or Management API) — there is no CLI link yet. Never change the production schema only from the dashboard.
+SQL changes live in [`supabase/migrations/`](./supabase/migrations) and are versioned by timestamp. Steps that would break the deployed site if applied too early (dropping a column the live front-end still reads) wait in [`pending/`](./supabase/migrations/pending) until the new front-end is deployed. They are applied manually (Supabase Dashboard SQL editor or Management API) — there is no CLI link yet. Never change the production schema only from the dashboard.
 
 ## Security notes
 
