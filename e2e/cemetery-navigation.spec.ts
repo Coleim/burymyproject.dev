@@ -153,7 +153,16 @@ test.describe("Cemetery: coming back from a grave", () => {
     const card = page.locator("main a[href*='/graves/project-']").nth(30);
     const href = (await card.getAttribute("href"))!;
     await card.scrollIntoViewIfNeeded(); // clicking would scroll it into view anyway
-    await page.waitForTimeout(250); // the position is saved on the next animation frame
+    // The position is saved on an animation frame: wait for it, not a fixed time
+    // (a slow CI runner needs longer than 250 ms).
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const saved = Number(sessionStorage.getItem("cemetery-scroll:")) || 0;
+          return Math.abs(saved - window.scrollY) < 2 && saved > 0;
+        }),
+      )
+      .toBe(true);
     const scrolledTo = await page.evaluate(() => window.scrollY);
     expect(scrolledTo).toBeGreaterThan(500);
 
