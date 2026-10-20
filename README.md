@@ -69,6 +69,9 @@ npm run dev
 | `npm run test:e2e:cross-browser` | Re-run the cemetery navigation tests on Chromium, Firefox and WebKit (Safari's engine). Needs `npx playwright install firefox webkit` |
 | `npm run test:rls` | Run RLS integration tests against the real Supabase project (requires `SUPABASE_SERVICE_ROLE_KEY`) |
 | `npm run seed -- [count]` | Insert fake graves (default 4000) under a dedicated `seed-bot` user, to test pagination, search and performance. Requires `SUPABASE_ACCESS_TOKEN` and Node ≥ 22.18 |
+| `npm run moderate -- hide\|unhide\|show <slug or URL>` | Hide or unhide a grave (it disappears from every public listing; its author can't undo it). Requires `SUPABASE_ACCESS_TOKEN` |
+| `npm run export` | Encrypted export of all graves and users (`SUPABASE_SERVICE_ROLE_KEY` + `BACKUP_PASSPHRASE`). A weekly workflow runs it once the `BACKUP_PASSPHRASE` secret exists |
+| `npm run export:decrypt -- <file>` | Decrypt an export |
 | `npm run seed:remove` | Remove everything created by `seed` (deleting the seed user cascades to its graves) |
 
 ## Database migrations
@@ -80,6 +83,8 @@ SQL changes live in [`supabase/migrations/`](./supabase/migrations) and are vers
 - Row Level Security and database constraints are the only server-side barrier (there is no custom backend), so every client-side rule is mirrored in the database.
 - GitHub Pages can't send custom HTTP headers, so the Content-Security-Policy is a `<meta>` tag injected into production builds by `vite.config.ts`. zod runs in `jitless` mode (no `eval`); always import it from `@/lib/zod` (enforced by ESLint).
 - Never put `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_ACCESS_TOKEN` in the client or in a committed file.
+- The repository is public, so workflow artifacts are too: exports are always encrypted.
+- Everything the site loads is self-hosted (fonts included), so visitors' browsers contact no third party except Supabase and the sign-in provider they choose.
 
 ## Deployment
 

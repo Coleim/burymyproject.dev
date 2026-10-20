@@ -123,6 +123,23 @@ create policy "author can delete own graves"
 - **Content-Security-Policy** : livrée en `<meta>` dans le build de production (plugin `cspMetaPlugin` de `vite.config.ts`, hash sha256 du script inline calculé automatiquement ; origine Supabase prise dans `VITE_SUPABASE_URL`). `script-src 'self'` sans `unsafe-inline`/`unsafe-eval` (zod passe en `jitless`, cf. `src/lib/zodConfig.ts`), `style-src` sans `unsafe-inline`, `object-src 'none'`, `base-uri`/`form-action 'self'`. Vérifiée en navigateur réel sur le build de prod et par `e2e/csp.spec.ts` (projet Playwright `production-build`). **Limites GitHub Pages** : pas de vrais en-têtes HTTP, donc ni `X-Frame-Options`/`frame-ancestors` (clickjacking), ni `X-Content-Type-Options`, ni `Permissions-Policy` ; à revoir avec un hébergeur qui permet des headers (Cloudflare Pages/Netlify/Vercel).
 - `.env.local` et tout `.env.*` (sauf `.env.example`) sont ignorés par git.
 
+### Avant l'ouverture au public (20/10/2026)
+
+- **Conditions d'utilisation** : page `/terms` (règles de contenu, licence d'affichage, liens externes, signalement et modération, pas de garantie), liée depuis le footer, la page de connexion (« By continuing you agree… ») et la politique de confidentialité. Rédigée en anglais clair, **sans relecture juridique** : à faire relire si le site prend de l'ampleur.
+- **Liens utilisateur** : `rel="nofollow ugc noopener noreferrer"` sur le lien du projet.
+- **Signalement** : lien « Report this grave » (mailto prérempli : sujet avec nom + slug, corps avec l'URL) pour tout visiteur sauf l'auteur ; adresse centralisée dans `src/lib/contact.ts`.
+- **Modération** : colonne `graves.hidden` (migration `20261020190000_moderation_hidden.sql`). Contrairement à `is_public`, l'auteur ne peut ni la modifier ni l'insérer à `true` (trigger `protect_grave_columns`) ; la policy publique l'honore, `home_stats()` l'exclut, ainsi que les listes (`hidden=eq.false`) et le sitemap ; l'auteur voit sa tombe avec un avis « hidden by a moderator ». Outil : `npm run moderate -- hide|unhide|show <slug ou URL>` (API Management ; entrée validée ; testé de bout en bout). Procédure : recevoir le mail → `npm run moderate -- show <slug>` → `hide` → répondre. Pour suspendre un compte : le supprimer dans le dashboard (cascade sur ses tombes) après export.
+- **Polices auto-hébergées** : Cinzel (variable, latin + latin-ext, 40 Ko, licence OFL) dans `src/assets/fonts/`. Les liens Google Fonts sont supprimés (Inter et Roboto étaient demandées mais jamais rendues) : plus d'IP de visiteur envoyée à Google, CSP `style-src 'self'` / `font-src 'self'`. Captures avant/après identiques au pixel sur 4 pages.
+- **Constat** : la plupart du texte est rendu en **Times** (police par défaut du navigateur), pas en Roboto/Inter. `--font-body`, `--font-mono` et `--font-display` sont utilisées par ~45 règles CSS mais **jamais définies** (seul `--font-heading` l'est) ; `html, body { font-family: "Roboto" }` ne s'applique donc pas comme prévu. Rien n'a été changé (ce serait un changement de design) : à décider.
+
+### Sauvegarde (le plan Free n'en fait pas)
+
+- `npm run export` (`scripts/export-data.mjs`) : toutes les tombes (privées et masquées incluses) + utilisateurs et identités, **toujours chiffré** (AES-256-GCM, clé dérivée par scrypt, refuse une phrase de passe < 12 caractères). Le dépôt étant public, ses artefacts le sont aussi : un export en clair divulguerait emails et tombes privées. Env : `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BACKUP_PASSPHRASE`.
+- `.github/workflows/backup.yml` : chaque dimanche (et à la demande), artefact chiffré conservé 30 jours. **Dormant tant que le secret de dépôt `BACKUP_PASSPHRASE` n'existe pas** (message d'info, pas d'échec). À conserver ailleurs en lieu sûr : sans elle, les sauvegardes sont illisibles.
+- Lecture : `BACKUP_PASSPHRASE=… npm run export:decrypt -- fichier.bmpx --out sauvegarde.json`.
+- Vérifié de bout en bout sur la vraie base (adaptateur SQL à la place du client service) : comptes identiques, tombes privées/masquées incluses, Unicode préservé, aucun clair dans le fichier, mauvaise phrase refusée. Le chemin `supabase-js` (clé service) ne tourne qu'en CI : premier vrai test = premier déclenchement manuel du workflow.
+- **Restauration** (manuelle) : les utilisateurs se reconnectent par OAuth et reçoivent un **nouvel UUID** ; rattacher les tombes en faisant correspondre `email` / identité (`identities[].identity_data`) de l'export avec le nouvel utilisateur, puis réinsérer les tombes avec le nouvel `author_id` (insertion en rôle admin : le trigger ne touche pas aux dates ni au `hidden`).
+
 ### Durcissement du 20/10/2026 (revue RLS / Vague F)
 
 Migration versionnée `supabase/migrations/20261020150000_harden_graves.sql`, appliquée en prod et vérifiée par simulation de rôles (`anon`, `authenticated` auteur, `authenticated` autre utilisateur, admin) dans une transaction annulée :
@@ -415,7 +432,8 @@ L'app est déployée en continu sur GitHub Pages (project page `coleim.github.io
 
 - Config : `vitest.config.ts` (environnement `jsdom`, alias `@`, exclut `e2e/**`)
 - Scripts : `npm run test:unit` / `npm run test:unit:watch`
-- Couverture actuelle (79 tests, 10 fichiers) :
+- Couverture actuelle (93 tests, 12 fichiers) :
+  - `scripts/lib/export-crypto.test.mjs`, `scripts/lib/export-snapshot.test.mjs` — chiffrement de l'export (aller-retour, mauvaise phrase, fichier altéré, aucun clair dans le fichier) et pagination > 1000 lignes
   - `src/lib/schemas/grave.test.ts` — règles zod (`died >= born`, champs optionnels, limite `tech_stack`)
   - `src/shared/components/TagInput.test.tsx` — ajout/suppression de tags, anti-doublon, limite `max`
   - `src/shared/components/TombstoneCard.test.tsx` — rendu des props, lien conditionnel vers `/graves/:slug`
@@ -429,7 +447,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (87 tests, 16 fichiers) :
+- Couverture actuelle (97 tests, 18 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion, `redirectTo` externe ignoré (open redirect)
@@ -437,6 +455,8 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
   - `e2e/404.spec.ts` — route inconnue et slug de tombe inexistant
   - `e2e/cemetery.spec.ts` — pagination « Load more » (mock de 4000 tombes), recherche, états vide/erreur
   - `e2e/cemetery-navigation.spec.ts` — `count` demandé uniquement sur la 1re page, images lazy, `content-visibility`, état dans l'URL (`?q=`, `?pages=` plafonné), retour arrière (recherche + pages + position de scroll, avec réseau lent), visite neuve = haut de page
+  - `e2e/legal-and-moderation.spec.ts` — page `/terms` et ses liens, `rel="nofollow ugc"`, lien « Report this grave » prérempli (absent pour l'auteur), avis « hidden by a moderator », listes publiques filtrées sur `hidden=eq.false`
+  - `e2e/self-hosted.spec.ts` — aucune requête vers googleapis/gstatic, Cinzel chargée depuis l'origine du site
   - `e2e/oauth-only.spec.ts` — build de production, connexion OAuth uniquement : pas de champs email/mot de passe, `/signup` → `/login`, un seul « Sign in », code du formulaire email jamais téléchargé, destination transmise au fournisseur, retour connecté → destination, `redirectTo` hostile ignoré (mutation-vérifié)
   - `e2e/undertaker.spec.ts` — illustration du croque-mort : décorative, chargée, sans chevauchement (nav/titre/formulaire/aperçu) à 320/375/768/1280 px, fichiers WebP optimisés, absente de la page d'édition
   - `e2e/edit-grave.spec.ts` — édition par l'auteur, not-found si pas propriétaire, redirection si déconnecté
