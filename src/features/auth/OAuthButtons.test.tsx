@@ -59,4 +59,21 @@ describe("OAuthButtons", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/something went wrong/i);
     expect(screen.getByRole("button", { name: /continue with github/i })).toBeEnabled();
   });
+
+  it("returns through /login with the destination, so the visitor lands where they meant to", async () => {
+    const user = userEvent.setup();
+    render(<OAuthButtons redirectTo="/graves/new" />);
+
+    await user.click(screen.getByRole("button", { name: /continue with github/i }));
+
+    expect(signInWithOAuth).toHaveBeenCalledWith({
+      provider: "github",
+      options: {
+        redirectTo:
+          window.location.origin +
+          import.meta.env.BASE_URL +
+          "login?redirectTo=%2Fgraves%2Fnew",
+      },
+    });
+  });
 });

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   makeGrave,
   makeManyGraves,
-  mockLoginSuccess,
+  seedSession,
   mockPaginatedGraves,
 } from "./mocks/supabase";
 
@@ -29,7 +29,6 @@ test.describe("Content-Security-Policy (production build)", () => {
   test("no page triggers a CSP violation", async ({ page }) => {
     const grave = makeGrave({ public_slug: "csp-1", project_url: "https://github.com/me/x" });
     await mockPaginatedGraves(page, [grave, ...makeManyGraves(5)]);
-    await mockLoginSuccess(page);
     await page.addInitScript(() => {
       (window as unknown as { __csp: string[] }).__csp = [];
       document.addEventListener("securitypolicyviolation", (e) => {
@@ -51,17 +50,11 @@ test.describe("Content-Security-Policy (production build)", () => {
       await collect();
     }
 
-    // Client-side validation (zod, jitless) and a logged-in flow also run under the policy.
-    await page.goto("signup");
-    await page.getByRole("button", { name: "Create account" }).click();
-    await expect(page.locator("[id$='-error']").first()).toBeVisible();
-
-    await page.goto("login");
-    await page.getByLabel("Email").fill("test@example.com");
-    await page.getByLabel("Password").fill("password1234");
-    await page.getByRole("button", { name: /^log in$/i }).click();
-    await expect(page).toHaveURL(/\/my-graves$/);
+    // Client-side validation (zod, jitless) and a signed-in flow also run under the policy.
+    await seedSession(page);
     await page.goto("graves/new");
+    await page.getByRole("button", { name: /bury the project/i }).click();
+    await expect(page.locator("[id$='-error']").first()).toBeVisible();
     await page.waitForLoadState("networkidle");
     await collect();
 

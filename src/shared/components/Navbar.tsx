@@ -1,5 +1,6 @@
 import logo from "@/assets/grave-logo.png";
 import { useAuth } from "@/features/auth/useAuth";
+import { EMAIL_AUTH_ENABLED } from "@/lib/features";
 import { supabase } from "@/lib/supabase";
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -84,7 +85,7 @@ export function Navbar() {
                 Log Out
               </Button>
             </>
-          ) : (
+          ) : EMAIL_AUTH_ENABLED ? (
             <>
               <LinkButton to="/login" variant="secondary">
                 Log In
@@ -93,6 +94,10 @@ export function Navbar() {
                 Sign Up
               </LinkButton>
             </>
+          ) : (
+            <LinkButton to="/login" variant="accent">
+              Sign in
+            </LinkButton>
           )}
         </div>
       </nav>

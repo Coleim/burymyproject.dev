@@ -2,7 +2,10 @@
  * RLS integration test — runs against the real Supabase project.
  *
  * Uses the service_role key only to create/delete fully-confirmed test
- * users (bypassing the mailer entirely, no rate limit issues). All actual
+ * users and to mint a one-time sign-in token for them (bypassing the mailer
+ * entirely, no rate limit issues). Email/password sign-in is disabled on the
+ * project (OAuth-only), so the users cannot log in with a password; the
+ * token is exchanged through the anon key like any client would. All actual
  * assertions use anon-key clients signed in as those users, exactly like
  * a real browser would — so this genuinely exercises the RLS policies.
  *
@@ -44,7 +47,6 @@ const admin = createClient(url, serviceRoleKey, {
 const suffix = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 const emailA = `rls-test-a-${suffix}@example.com`;
 const emailB = `rls-test-b-${suffix}@example.com`;
-const password = "RlsTest1234!";
 
 let userAId;
 let userBId;
@@ -56,7 +58,6 @@ try {
   const { data: createdA, error: createAError } =
     await admin.auth.admin.createUser({
       email: emailA,
-      password,
       email_confirm: true,
     });
   check("Create confirmed test user A", !createAError, createAError?.message);
@@ -65,28 +66,59 @@ try {
   const { data: createdB, error: createBError } =
     await admin.auth.admin.createUser({
       email: emailB,
-      password,
       email_confirm: true,
     });
   check("Create confirmed test user B", !createBError, createBError?.message);
   userBId = createdB?.user?.id;
 
   // --- Sign in as each user with the anon key, like a real client would ---
-  const clientA = createClient(url, anonKey);
-  const clientB = createClient(url, anonKey);
+  // No password: mint a one-time token with the admin API and exchange it.
+  async function signInAs(email) {
+    const client = createClient(url, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { data: link, error: linkError } =
+      await admin.auth.admin.generateLink({ type: "magiclink", email });
+    if (linkError) return { client, error: linkError };
+    const { error } = await client.auth.verifyOtp({
+      token_hash: link.properties.hashed_token,
+      type: "magiclink",
+    });
+    return { client, error };
+  }
+
   const anonClient = createClient(url, anonKey);
+  const { client: clientA, error: loginAError } = await signInAs(emailA);
+  check("Sign in as user A (one-time token)", !loginAError, loginAError?.message);
 
-  const { error: loginAError } = await clientA.auth.signInWithPassword({
-    email: emailA,
-    password,
-  });
-  check("Login user A", !loginAError, loginAError?.message);
+  const { client: clientB, error: loginBError } = await signInAs(emailB);
+  check("Sign in as user B (one-time token)", !loginBError, loginBError?.message);
 
-  const { error: loginBError } = await clientB.auth.signInWithPassword({
-    email: emailB,
-    password,
+  // --- Email/password is OAuth-only: it must stay refused server-side ---
+  const strayEmail = `rls-disabled-check-${suffix}@example.com`;
+  const { data: strayUser, error: signUpError } = await anonClient.auth.signUp({
+    email: strayEmail,
+    password: "Sup3rSecret-pass",
   });
-  check("Login user B", !loginBError, loginBError?.message);
+  check(
+    "Email/password SIGNUP is disabled (OAuth-only)",
+    signUpError?.code === "email_provider_disabled",
+    signUpError ? `${signUpError.code}: ${signUpError.message}` : "signup was accepted",
+  );
+  if (strayUser?.user?.id) await admin.auth.admin.deleteUser(strayUser.user.id);
+
+  const { error: passwordLoginError } =
+    await anonClient.auth.signInWithPassword({
+      email: emailA,
+      password: "Sup3rSecret-pass",
+    });
+  check(
+    "Email/password LOGIN is disabled (OAuth-only)",
+    passwordLoginError?.code === "email_provider_disabled",
+    passwordLoginError
+      ? `${passwordLoginError.code}: ${passwordLoginError.message}`
+      : "login was accepted",
+  );
 
   // --- User A creates a public grave and a private grave ---
   const { data: publicGrave, error: publicGraveError } = await clientA

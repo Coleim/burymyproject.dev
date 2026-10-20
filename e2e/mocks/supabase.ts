@@ -50,6 +50,16 @@ function fakeSession(userId: string, email: string) {
   };
 }
 
+/** Starts the page already signed in, without going through any login form. */
+export async function seedSession(page: Page, email = "test@example.com") {
+  const ref = new URL(process.env.VITE_SUPABASE_URL!).hostname.split(".")[0];
+  const session = JSON.stringify(fakeSession("user-1", email));
+  await page.addInitScript(
+    ([key, value]) => localStorage.setItem(key, value),
+    [`sb-${ref}-auth-token`, session],
+  );
+}
+
 export function mockLoginSuccess(page: Page, email = "test@example.com") {
   return page.route("**/auth/v1/token*", async (route) => {
     await route.fulfill({

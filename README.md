@@ -26,7 +26,7 @@ Every developer has a folder full of half-finished ideas. `burymyproject.dev` gi
 - ✏️ Edit your graves after burying them
 - 📜 "My Graveyard" — a private dashboard of everything you've buried
 - 🌍 "Global Cemetery" — browse every public grave buried by the community, with "Load more" pagination and name search
-- 🔐 Email/password, Google and GitHub sign-in (Supabase Auth)
+- 🔐 Sign in with Google or GitHub (Supabase Auth). Email/password exists in the code behind `VITE_AUTH_EMAIL_ENABLED` but is off until reliable email sending is set up
 - 📱 Responsive down to 320px, with a mobile menu
 - ♿ Accessibility: automated axe checks, skip link, keyboard navigation, measured colour contrast, reduced-motion support
 - 📊 Real-time home page stats (total graves, developers, most common cause of death) computed from Supabase

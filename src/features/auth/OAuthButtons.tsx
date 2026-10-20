@@ -51,7 +51,12 @@ const PROVIDERS: OAuthProvider[] = [
   },
 ];
 
-export function OAuthButtons() {
+type OAuthButtonsProps = {
+  /** In-app path to send the visitor to once signed in (already validated). */
+  redirectTo?: string;
+};
+
+export function OAuthButtons({ redirectTo }: OAuthButtonsProps) {
   const [pending, setPending] = useState<OAuthProvider["provider"] | null>(
     null,
   );
@@ -63,7 +68,14 @@ export function OAuthButtons() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: window.location.origin + import.meta.env.BASE_URL,
+        // The provider returns to /login, which forwards to the destination
+        // once the session is in place.
+        redirectTo:
+          window.location.origin +
+          import.meta.env.BASE_URL +
+          (redirectTo
+            ? `login?redirectTo=${encodeURIComponent(redirectTo)}`
+            : ""),
       },
     });
     // On success the browser navigates away to the provider, so the pending

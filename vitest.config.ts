@@ -14,5 +14,6 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     globals: true,
     exclude: ["node_modules/**", "e2e/**"],
+    env: { VITE_AUTH_EMAIL_ENABLED: "true" },
   },
 });

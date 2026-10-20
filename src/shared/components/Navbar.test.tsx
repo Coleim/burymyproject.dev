@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import * as useAuthModule from "@/features/auth/useAuth";
 import { Navbar } from "./Navbar";
 
@@ -56,5 +56,42 @@ describe("Navbar mobile menu", () => {
     await user.click(screen.getByRole("link", { name: /log in/i }));
 
     expect(screen.getByRole("button", { name: "Open menu" })).toBeInTheDocument();
+  });
+});
+
+describe("Navbar sign-in links", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  async function renderWithFlag(enabled: "true" | "false") {
+    vi.stubEnv("VITE_AUTH_EMAIL_ENABLED", enabled);
+    vi.resetModules();
+    const { Navbar: FlagNavbar } = await import("./Navbar");
+    const useAuthModule = await import("@/features/auth/useAuth");
+    vi.spyOn(useAuthModule, "useAuth").mockReturnValue({
+      session: null,
+      user: null,
+      loading: false,
+    });
+    return render(
+      <MemoryRouter>
+        <FlagNavbar />
+      </MemoryRouter>,
+    );
+  }
+
+  it("shows Log In and Sign Up when email auth is enabled", async () => {
+    await renderWithFlag("true");
+    expect(screen.getByRole("link", { name: /^log in$/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^sign up$/i })).toBeInTheDocument();
+  });
+
+  it("shows a single Sign in link when sign-in is OAuth-only", async () => {
+    await renderWithFlag("false");
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+    expect(screen.queryByRole("link", { name: /^sign up$/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /^log in$/i })).toBeNull();
   });
 });

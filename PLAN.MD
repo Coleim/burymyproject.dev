@@ -245,8 +245,8 @@ src/
 | Route | Accès | Description |
 | --- | --- | --- |
 | `/` | Public | Landing page, "Recently Buried" = 6 dernières tombes publiques |
-| `/login` | Public | Connexion (redirige vers `redirectTo` ou `/my-graves`) |
-| `/signup` | Public | Inscription (email de confirmation géré par Supabase Auth) |
+| `/login` | Public | Connexion Google/GitHub (redirige vers `redirectTo` ou `/my-graves` ; renvoie aussi un utilisateur déjà connecté) |
+| `/signup` | Public | Redirige vers `/login` (OAuth uniquement) ; formulaire d'inscription email derrière `VITE_AUTH_EMAIL_ENABLED` |
 | `/cemetery` | Public | Cimetière global, toutes les tombes publiques |
 | `/graves/:slug` | Public | Tombe individuelle, 404 thématique si non trouvée/non publique |
 | `/my-graves` | Authentifié (`ProtectedRoute`) | Mes tombes (publiques + privées), suppression, empty state |
@@ -292,6 +292,17 @@ Pas de middleware serveur (CSR pur) : la protection de route est gérée par `Pr
 - [x] Config Supabase Auth : `site_url` + `uri_allow_list` pointent vers GitHub Pages (+ localhost dev/e2e)
 - [x] Boutons OAuth (`OAuthButtons.tsx` : Google + GitHub) sur Login/SignUp
 - [x] **Test manuel** : signup, login, création de tombe publique/privée, RLS (lecture/update/delete croisés entre utilisateurs) — tout validé via script contre le vrai projet Supabase le 17/10/2026. Seul point non testable automatiquement : le vrai flow d'email de confirmation (bloqué par le rate limit du mailer par défaut, cf. Milestone 1) — contourné via `mailer_autoconfirm` temporaire pour le test, remis à `false` immédiatement après.
+
+#### Décision du 20/10/2026 : connexion OAuth uniquement (Google + GitHub)
+
+Faute d'envoi d'email fiable (limite de 2 emails/heure du mailer par défaut), l'inscription/connexion email+mot de passe est **désactivée** :
+
+- **Serveur** : `external_email_enabled: false` (API Management). Vérifié : `POST /auth/v1/signup` → `email_provider_disabled`, `grant_type=password` → `email_provider_disabled` ; Google et GitHub redirigent toujours. Désactiver seulement le formulaire ne suffisait pas : l'API restait appelable (comptes non vérifiés, saturation du mailer, risque de liaison de compte avec une identité OAuth portant le même email). `auto-confirm` volontairement non utilisé pour la même raison.
+- **Front** : drapeau de build `VITE_AUTH_EMAIL_ENABLED` (défaut : désactivé). Désactivé : `/login` n'affiche que les boutons OAuth, `/signup` redirige vers `/login` (en gardant `?redirectTo=`), la navbar affiche un seul « Sign in » ; le code du formulaire email est en `React.lazy` et n'est jamais téléchargé. Les tests e2e du serveur de dev tournent drapeau activé, le projet `production-build` drapeau désactivé.
+- **Destination après connexion** : `OAuthButtons` fait revenir le fournisseur sur `/login?redirectTo=…` (chemin validé par `safeRedirectPath`) ; `LoginPage` redirige dès qu'une session existe (un utilisateur déjà connecté qui visite `/login` est renvoyé aussi).
+- **Utilisateurs** : les 6 comptes existants (dont les comptes de test et le seed) ont été supprimés (cascade sur leurs tombes) ; sauvegarde locale hors dépôt faite avant.
+- **Tests RLS en CI** : `scripts/rls-integration-test.mjs` ne peut plus se connecter par mot de passe ; il crée les utilisateurs de test (API admin), génère un jeton à usage unique (`generateLink` magiclink) et l'échange par `verifyOtp` avec la clé anon (le code source de GoTrue montre que ni `generate_link` ni `/verify` ne vérifient l'activation du fournisseur email ; vérifié avec un faux jeton : `otp_expired`, pas `email_provider_disabled`). Il vérifie aussi que signup et login par mot de passe restent refusés.
+- **Pour réactiver l'email** : (1) un SMTP fiable (domaine ou Gmail + mot de passe d'application) ; (2) `external_email_enabled: true` ; (3) `VITE_AUTH_EMAIL_ENABLED=true` au build ; (4) adapter la politique de confidentialité (« we never store a password ») ; (5) ajouter « mot de passe oublié » (inexistant).
 
 #### ⚠️ Problème connu : emails de confirmation peu fiables
 
@@ -404,7 +415,7 @@ L'app est déployée en continu sur GitHub Pages (project page `coleim.github.io
 
 - Config : `vitest.config.ts` (environnement `jsdom`, alias `@`, exclut `e2e/**`)
 - Scripts : `npm run test:unit` / `npm run test:unit:watch`
-- Couverture actuelle (76 tests, 10 fichiers) :
+- Couverture actuelle (79 tests, 10 fichiers) :
   - `src/lib/schemas/grave.test.ts` — règles zod (`died >= born`, champs optionnels, limite `tech_stack`)
   - `src/shared/components/TagInput.test.tsx` — ajout/suppression de tags, anti-doublon, limite `max`
   - `src/shared/components/TombstoneCard.test.tsx` — rendu des props, lien conditionnel vers `/graves/:slug`
@@ -418,7 +429,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (79 tests, 15 fichiers) :
+- Couverture actuelle (87 tests, 16 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion, `redirectTo` externe ignoré (open redirect)
@@ -426,6 +437,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
   - `e2e/404.spec.ts` — route inconnue et slug de tombe inexistant
   - `e2e/cemetery.spec.ts` — pagination « Load more » (mock de 4000 tombes), recherche, états vide/erreur
   - `e2e/cemetery-navigation.spec.ts` — `count` demandé uniquement sur la 1re page, images lazy, `content-visibility`, état dans l'URL (`?q=`, `?pages=` plafonné), retour arrière (recherche + pages + position de scroll, avec réseau lent), visite neuve = haut de page
+  - `e2e/oauth-only.spec.ts` — build de production, connexion OAuth uniquement : pas de champs email/mot de passe, `/signup` → `/login`, un seul « Sign in », code du formulaire email jamais téléchargé, destination transmise au fournisseur, retour connecté → destination, `redirectTo` hostile ignoré (mutation-vérifié)
   - `e2e/undertaker.spec.ts` — illustration du croque-mort : décorative, chargée, sans chevauchement (nav/titre/formulaire/aperçu) à 320/375/768/1280 px, fichiers WebP optimisés, absente de la page d'édition
   - `e2e/edit-grave.spec.ts` — édition par l'auteur, not-found si pas propriétaire, redirection si déconnecté
   - `e2e/seo.spec.ts` — meta Open Graph/description/canonical, image de partage servie, titres de page

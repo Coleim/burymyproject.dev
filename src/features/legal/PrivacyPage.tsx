@@ -29,10 +29,11 @@ export function PrivacyPage() {
               </h2>
               <ul>
                 <li>
-                  <strong>Account data</strong>: your email address and
-                  password (or your Google or GitHub account identifier and
-                  email, if you sign in with one of them), managed by Supabase
-                  Auth.
+                  <strong>Account data</strong>: you sign in with Google or
+                  GitHub, so we receive your email address, your account
+                  identifier and the basic profile details that provider
+                  shares (such as your name and avatar URL), managed by
+                  Supabase Auth. We never see or store a password.
                 </li>
                 <li>
                   <strong>Grave content</strong>: anything you choose to
