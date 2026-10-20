@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /burymyproject.dev/my-graves
+Disallow: /burymyproject.dev/graves/new
+Disallow: /burymyproject.dev/login
+Disallow: /burymyproject.dev/signup
+
+Sitemap: https://coleim.github.io/burymyproject.dev/sitemap.xml

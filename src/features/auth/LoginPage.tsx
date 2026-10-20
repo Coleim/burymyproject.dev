@@ -8,6 +8,7 @@ import { z } from "zod";
 import { AuthLayout } from "./AuthLayout";
 import { OAuthButtons } from "./OAuthButtons";
 import styles from "./AuthLayout.module.css";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email"),
@@ -17,6 +18,7 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
+  usePageTitle("Log in");
   const navigate = useNavigate();
   const location = useLocation();
   const [formError, setFormError] = useState<string | null>(null);

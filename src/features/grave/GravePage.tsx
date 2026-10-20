@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Grave } from "./types";
 import styles from "./GravePage.module.css";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 export function GravePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -16,6 +17,14 @@ export function GravePage() {
   const [grave, setGrave] = useState<Grave | null>(null);
   const [status, setStatus] = useState<"loading" | "found" | "not-found">(
     "loading",
+  );
+
+  usePageTitle(
+    status === "found" && grave
+      ? `${grave.name} — RIP`
+      : status === "not-found"
+        ? "Grave not found"
+        : undefined,
   );
 
   useEffect(() => {

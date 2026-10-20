@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import type { Grave } from "@/features/grave/types";
 import styles from "@/shared/components/GraveGrid.module.css";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 const PAGE_SIZE = 24;
 const SKELETON_COUNT = 8;
@@ -40,6 +41,7 @@ async function fetchPage(from: number, term: string) {
 }
 
 export function CemeteryPage() {
+  usePageTitle("Cemetery");
   const [input, setInput] = useState("");
   const [term, setTerm] = useState("");
   const [data, setData] = useState<CemeteryData | null>(null);

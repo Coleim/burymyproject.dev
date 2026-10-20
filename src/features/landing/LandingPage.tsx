@@ -8,6 +8,7 @@ import type { Grave } from "@/features/grave/types";
 import { Link } from "react-router-dom";
 import { Hero } from "./Hero";
 import styles from "./LandingPage.module.css";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 type HomeStats = {
   totalGraves: number;
@@ -33,6 +34,7 @@ function computeTopCause(causes: (string | null)[]): string | null {
 }
 
 export function LandingPage() {
+  usePageTitle();
   const [recentGraves, setRecentGraves] = useState<Grave[] | null>(null);
   const [stats, setStats] = useState<HomeStats | null>(null);
 

@@ -6,8 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { GraveForm } from "./GraveForm";
 import { GraveFormShell } from "./GraveFormShell";
 import { toGraveRow } from "./graveRow";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 export function NewGravePage() {
+  usePageTitle("Dig a new grave");
   const { user } = useAuth();
   const navigate = useNavigate();
 

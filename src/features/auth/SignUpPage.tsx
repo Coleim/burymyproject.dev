@@ -8,6 +8,7 @@ import { z } from "zod";
 import { AuthLayout } from "./AuthLayout";
 import { OAuthButtons } from "./OAuthButtons";
 import styles from "./AuthLayout.module.css";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 const signUpSchema = z
   .object({
@@ -23,6 +24,7 @@ const signUpSchema = z
 type SignUpValues = z.infer<typeof signUpSchema>;
 
 export function SignUpPage() {
+  usePageTitle("Sign up");
   const navigate = useNavigate();
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmationSent, setConfirmationSent] = useState(false);

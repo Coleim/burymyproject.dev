@@ -10,8 +10,10 @@ import { GraveFormShell } from "./GraveFormShell";
 import { toGraveRow } from "./graveRow";
 import type { Grave } from "./types";
 import styles from "./GravePage.module.css";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 export function EditGravePage() {
+  usePageTitle("Edit grave");
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();

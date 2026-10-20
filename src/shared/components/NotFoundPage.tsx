@@ -1,8 +1,10 @@
 import { LinkButton } from "./LinkButton";
 import { Navbar } from "./Navbar";
 import styles from "./NotFoundPage.module.css";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 export function NotFoundPage() {
+  usePageTitle("Page not found");
   return (
     <div className={styles.page}>
       <div className={styles.inner}>

@@ -7,10 +7,12 @@ import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import type { Grave } from "@/features/grave/types";
 import styles from "@/shared/components/GraveGrid.module.css";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 const SKELETON_COUNT = 8;
 
 export function MyGravesPage() {
+  usePageTitle("My graveyard");
   const { user } = useAuth();
   const [graves, setGraves] = useState<Grave[] | null>(null);
 

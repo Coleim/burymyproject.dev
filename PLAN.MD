@@ -249,7 +249,7 @@ Code front en place (`OAuthButtons.tsx` (Google + GitHub, liste de providers), t
 - [x] **Google Cloud Console** : projet + OAuth consent screen (External) + OAuth client ID (Web application)
 - [x] **Authorized redirect URI** : `https://bibzxeryywqvjwoejgwz.supabase.co/auth/v1/callback`
 - [x] Provider activé côté Supabase via l'API Management (`external_google_enabled: true`) ; `/auth/v1/authorize?provider=google` redirige bien vers Google
-- [ ] Consent screen à passer en « In production » (sinon seuls les test users peuvent se connecter)
+- [x] Consent screen passé en « In production » (confirmé le 20/10/2026)
 - [ ] **Test** : bouton "Continue with Google" sur `/login` et `/signup`, vérifier la redirection complète (Google → Supabase callback → retour sur l'app, session créée, redirection vers `/my-graves`)
 
 ### Milestone 2 — Créer une tombe ✅ fait
@@ -301,7 +301,7 @@ Code front en place (`OAuthButtons.tsx` (Google + GitHub, liste de providers), t
 - [ ] Surveiller les quotas Supabase Free (500 MB DB, 50k MAU auth) ; passer en Pro si besoin
 - [x] Pagination réelle sur `/cemetery` (« Load more », `range()`, count exact ; testée sur un mock de 4000 tombes et sur 4000 tombes réelles seedées, cf. section Tests de charge)
 - [ ] Cache client (`@tanstack/react-query` ou équivalent) pour éviter les refetchs inutiles
-- [ ] Sitemap + meta tags statiques basiques pour le SEO
+- [x] Sitemap + meta tags statiques basiques pour le SEO
 - [ ] Rate limiting applicatif sur signup/création de tombe (abuse prevention)
 - [ ] Tests automatisés sur les flows critiques (Playwright ou Vitest + Testing Library)
 
@@ -338,7 +338,7 @@ L'app est déployée en continu sur GitHub Pages (project page `coleim.github.io
 
 - Config : `vitest.config.ts` (environnement `jsdom`, alias `@`, exclut `e2e/**`)
 - Scripts : `npm run test:unit` / `npm run test:unit:watch`
-- Couverture actuelle (40 tests, 7 fichiers) :
+- Couverture actuelle (42 tests, 8 fichiers) :
   - `src/lib/schemas/grave.test.ts` — règles zod (`died >= born`, champs optionnels, limite `tech_stack`)
   - `src/shared/components/TagInput.test.tsx` — ajout/suppression de tags, anti-doublon, limite `max`
   - `src/shared/components/TombstoneCard.test.tsx` — rendu des props, lien conditionnel vers `/graves/:slug`
@@ -352,7 +352,7 @@ Note : le plan initial prévoyait MSW, mais l'interception native de Playwright 
 - Config : `playwright.config.ts` (serveur `vite dev` sur le port 4300, `baseURL` incluant le `base` GitHub Pages)
 - Mocks réseau : `e2e/mocks/supabase.ts` (signup, login, liste de tombes, insertion)
 - Scripts : `npm run test:e2e`
-- Couverture actuelle (33 tests, 8 fichiers) :
+- Couverture actuelle (36 tests, 9 fichiers) :
   - `e2e/landing.spec.ts` — landing + navigation + stats réelles calculées depuis Supabase
   - `e2e/auth.spec.ts` — validation signup, confirmation email, email déjà utilisé, erreur login, redirection après login
   - `e2e/protected-routes.spec.ts` — redirection `/login?redirectTo=...` sur `/my-graves` et `/graves/new`, retour à la page d'origine après connexion
@@ -392,7 +392,7 @@ Intégré dans `.github/workflows/deploy.yml` (job `test`), bloque le déploieme
 Découpage convenu pour la suite, auth/Google OAuth/fiabilité email explicitement **mis de côté pour l'instant** (cf. Milestone 1) :
 
 - [x] **Vague A — Qualité & revue de code** : DRY du CSS fond/overlay (7 fichiers → `composes`), bug d'asset Vite détecté et corrigé au passage. Skeletons de chargement + suppression déplacée vers la page de détail (demandes complémentaires traitées dans la foulée).
-- [ ] **Vague B — SEO & partage social** : meta OG statiques dans `index.html` (landing uniquement, le dynamique par tombe nécessite du SSR/edge — limitation documentée), `robots.txt` + `sitemap.xml` généré au build (requête Supabase des tombes publiques)
+- [x] **Vague B — SEO & partage social** : meta description/canonical/Open Graph/Twitter dans `index.html` (landing) + image de partage 1200×630 (`public/og-image.jpg`), `document.title` par page (`usePageTitle`, ex. « DevFlow — RIP · burymyproject.dev »), `public/robots.txt`, `dist/sitemap.xml` généré au build (`scripts/generate-sitemap.mjs`, pages statiques + toutes les tombes publiques, pagination > 1000 testée sur 2500 tombes seedées). **Limites documentées** : (1) les aperçus OG par tombe nécessitent du SSR/edge (les bots n'exécutent pas le JS) ; (2) `robots.txt` n'est lu qu'à la racine d'un domaine — sans domaine custom, il est ignoré sur `coleim.github.io/burymyproject.dev/` (soumettre le sitemap dans Google Search Console) ; (3) GitHub Pages répond 404 sur les deep links avant le hack SPA, ce qui peut gêner l'indexation des pages `/graves/:slug`.
 - [ ] **Vague C — a11y & responsive** : audit clavier/contraste, passage responsive mobile/tablette
 - [ ] **Vague D — Monitoring & analytics** : Sentry (erreurs front) + Plausible/Umami (analytics) — nécessite la création de comptes externes par l'utilisateur
 - [x] **Vague E — Scaling léger** : pagination sur `/cemetery` faite (perf validée sur 4000 lignes réelles, cf. Tests de charge ; index `pg_trgm` à ajouter seulement si la recherche devient lente à plus grande échelle)

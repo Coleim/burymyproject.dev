@@ -1,7 +1,9 @@
 import { Navbar } from "@/shared/components/Navbar";
 import styles from "./PrivacyPage.module.css";
+import { usePageTitle } from "@/shared/lib/usePageTitle";
 
 export function PrivacyPage() {
+  usePageTitle("Privacy");
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
