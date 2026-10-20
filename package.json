@@ -11,7 +11,9 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:rls": "node scripts/rls-integration-test.mjs"
+    "test:rls": "node scripts/rls-integration-test.mjs",
+    "seed": "node scripts/seed-graves.mjs",
+    "seed:remove": "node scripts/unseed-graves.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.2",

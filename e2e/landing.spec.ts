@@ -44,3 +44,27 @@ test.describe("Landing page", () => {
     );
   });
 });
+
+test.describe("mobile menu", () => {
+  test.use({ viewport: { width: 375, height: 812 } });
+
+  test("hides nav actions until the menu button is opened", async ({ page }) => {
+    await page.route("**/rest/v1/graves*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      });
+    });
+    await page.goto("");
+
+    const logIn = page.getByRole("link", { name: /^log in$/i });
+    await expect(logIn).toBeHidden();
+
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(logIn).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(logIn).toBeHidden();
+  });
+});

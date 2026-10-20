@@ -83,6 +83,7 @@ export type MockGrave = {
   died: string | null;
   cause: string | null;
   tech_stack: string[];
+  project_url: string | null;
   public_slug: string;
   is_public: boolean;
   tombstone_bg: string;
@@ -102,6 +103,7 @@ export function makeGrave(overrides: Partial<MockGrave> = {}): MockGrave {
     died: "2024-02-01",
     cause: "Scope Creep",
     tech_stack: ["React", "Node"],
+    project_url: null,
     public_slug: "devflow-abc123",
     is_public: true,
     tombstone_bg: "grave_bg_01.webp",
@@ -136,6 +138,80 @@ export function mockGraveInsert(page: Page, grave: MockGrave) {
       status: 201,
       contentType: "application/json",
       body: JSON.stringify(grave),
+    });
+  });
+}
+
+export function makeManyGraves(total: number): MockGrave[] {
+  return Array.from({ length: total }, (_, i) => {
+    const n = String(i + 1).padStart(4, "0");
+    return makeGrave({
+      id: `grave-${n}`,
+      name: `Project ${n}`,
+      public_slug: `project-${n}`,
+      created_at: new Date(Date.UTC(2026, 0, 1) - i * 60_000).toISOString(),
+    });
+  });
+}
+
+function likeToRegExp(pattern: string) {
+  let source = "";
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === "\\" && i + 1 < pattern.length) {
+      source += pattern[++i].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    } else if (c === "%") {
+      source += ".*";
+    } else if (c === "_") {
+      source += ".";
+    } else {
+      source += c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+  }
+  return new RegExp(`^${source}$`, "i");
+}
+
+export function mockPaginatedGraves(
+  page: Page,
+  all: MockGrave[],
+  options: { failOffsets?: number[] } = {},
+) {
+  const failures = new Set(options.failOffsets ?? []);
+  return page.route("**/rest/v1/graves*", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.fallback();
+      return;
+    }
+    const url = new URL(route.request().url());
+    const offset = Number(url.searchParams.get("offset") ?? 0);
+    const limit = Number(url.searchParams.get("limit") ?? all.length);
+
+    if (failures.delete(offset)) {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ message: "boom" }),
+      });
+      return;
+    }
+
+    const nameFilter = url.searchParams.get("name");
+    const matches = nameFilter?.startsWith("ilike.")
+      ? all.filter((g) =>
+          likeToRegExp(nameFilter.slice("ilike.".length)).test(g.name),
+        )
+      : all;
+
+    const slice = matches.slice(offset, offset + limit);
+    const end = slice.length ? offset + slice.length - 1 : offset;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: {
+        "content-range": slice.length ? `${offset}-${end}/${matches.length}` : `*/${matches.length}`,
+        "access-control-expose-headers": "Content-Range",
+      },
+      body: JSON.stringify(slice),
     });
   });
 }
